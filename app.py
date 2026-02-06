@@ -17,6 +17,25 @@ st.markdown("""
         padding-top: 1rem !important;
         padding-bottom: 0rem !important;
     }
+    st.markdown("""
+<style>
+    /* ... (MANTÉN TU CÓDIGO CSS ANTERIOR AQUÍ: .block-container, h1, etc.) ... */
+
+    /* NUEVO: Personalizar el área de escritura (Input) */
+    .stChatInput textarea {
+        background-color: #90D5FF !important; /* Fondo amarillo pálido */
+        color: #333333 !important; /* Texto gris oscuro */
+        border: 2px solid #f9a825 !important; /* Borde naranja/dorado */
+        border-radius: 15px !important;
+    }
+    
+    /* Opcional: Cambiar el icono de enviar */
+    .stChatInput button {
+        color: #f9a825 !important;
+    }
+
+</style>
+""", unsafe_allow_html=True)
     
     /* 2. Hacemos el título más compacto */
     h1 {
@@ -192,7 +211,7 @@ with tab2:
             st.session_state.mensajes_drill = [{"role": "assistant", "content": q}]
 
     # Chat UI
-    chat_container = st.container(height=400) # Un contenedor con scroll fijo
+    chat_container = st.container(height=250) # Un contenedor con scroll fijo
     with chat_container:
         for msg in st.session_state.mensajes_drill:
             with st.chat_message(msg["role"]):
@@ -231,6 +250,7 @@ with tab3:
             st.success(f"Escenario: {escenario}")
             st.chat_message("assistant").write(intro)
             st.info("💡 Tip: Responde en tu mente o en voz alta para practicar.")
+
 
 
 
