@@ -70,47 +70,63 @@ st.markdown("---")
 with st.sidebar:
     st.header("⚙️ Configuración")
     
-    # Selector de Idioma
+    # 1. Selector de Idioma
     idioma = st.selectbox("¿Qué quieres aprender?", ["Francés 🇫🇷", "Inglés 🇬🇧", "Italiano 🇮🇹", "Alemán 🇩🇪"])
     
     st.divider()
     
-    # --- LÓGICA DE DÍAS (NUEVO) ---
-    # Inicializamos el contador de días si no existe
+    # 2. LÓGICA DE PROGRESO
     if 'dia_actual' not in st.session_state:
         st.session_state.dia_actual = 1
+    
+    # Inicializamos el estado de "Lección Completada" si no existe
+    if 'day_completed' not in st.session_state:
+        st.session_state.day_completed = False
 
     # Botones de navegación
     col_prev, col_next = st.columns(2)
+    
     with col_prev:
         if st.button("⬅️ Anterior"):
             if st.session_state.dia_actual > 1:
                 st.session_state.dia_actual -= 1
+                # (Opcional) Si vuelves atrás, ¿quieres que esté completado o no? 
+                # De momento lo dejamos como estaba.
+                st.rerun()
+
     with col_next:
-        if st.button("Siguiente ➡️"):
+        # EL TRUCO: El botón se desactiva (disabled) si 'day_completed' es False
+        bloqueado = not st.session_state.day_completed
+        if st.button("Siguiente ➡️", disabled=bloqueado):
             if st.session_state.dia_actual < 30:
                 st.session_state.dia_actual += 1
-
-    # Variable 'dia' para usar en el resto de la app
-    dia = st.session_state.dia_actual
+                st.session_state.day_completed = False # ¡Reseteamos para el nuevo día!
+                st.rerun()
     
-    # Barra de progreso visual (No se puede mover manualmente)
+    # Mensaje de estado (Candado)
+    if not st.session_state.day_completed:
+        st.caption("🔒 *Completa la lección para avanzar.*")
+    else:
+        st.success("🔓 *¡Nivel desbloqueado!*")
+
+    # Barra de progreso
+    dia = st.session_state.dia_actual
     st.write(f"### 📆 Día {dia} de 30")
     progreso = dia / 30
     st.progress(progreso)
 
-    # Lógica de fases
+    # ... (El resto del código de Fases igual que antes) ...
     if dia <= 7:
-        fase = "Fase 1: Supervivencia (Básico)"
+        fase = "Fase 1: Supervivencia"
         icono_fase = "🆘"
     elif dia <= 14:
         fase = "Fase 2: Conexión Social"
         icono_fase = "🤝"
     elif dia <= 21:
-        fase = "Fase 3: Resolución de Problemas"
+        fase = "Fase 3: Resolución"
         icono_fase = "🧩"
     else:
-        fase = "Fase 4: Fluidez y Opinión"
+        fase = "Fase 4: Fluidez"
         icono_fase = "🗣️"
     
     st.info(f"{icono_fase} **{fase}**")
@@ -192,4 +208,5 @@ with tab3:
             st.success(f"Escenario: {escenario}")
             st.chat_message("assistant").write(intro)
             st.info("💡 Tip: Responde en tu mente o en voz alta para practicar.")
+
 
