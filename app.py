@@ -9,12 +9,31 @@ st.set_page_config(
     layout="wide"  # Usamos todo el ancho de la pantalla
 )
 
-# Estilos CSS personalizados para "embellecer" la app
+# Estilos CSS personalizados: "Compact Mode"
 st.markdown("""
 <style>
-    .big-font { font-size:20px !important; }
+    /* 1. Quitamos el espacio en blanco gigante de arriba */
+    .block-container {
+        padding-top: 1rem !important;
+        padding-bottom: 0rem !important;
+    }
+    
+    /* 2. Hacemos el título más compacto */
+    h1 {
+        margin-top: 0px !important;
+        padding-top: 0px !important;
+        font-size: 2.5rem !important; /* Ajustamos tamaño si es muy grande */
+    }
+    
+    /* 3. Estilos de botones y cajas (lo que ya tenías) */
     .stButton>button { width: 100%; border-radius: 10px; }
     .highlight { background-color: #f0f2f6; padding: 15px; border-radius: 10px; border-left: 5px solid #ff4b4b; }
+    
+    /* 4. Ocultamos el menú hamburguesa de arriba a la derecha y el footer de "Made with Streamlit" */
+    /* (Opcional: deja la app más limpia) */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -208,6 +227,7 @@ with tab3:
             st.success(f"Escenario: {escenario}")
             st.chat_message("assistant").write(intro)
             st.info("💡 Tip: Responde en tu mente o en voz alta para practicar.")
+
 
 
 
