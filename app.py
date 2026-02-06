@@ -40,7 +40,7 @@ st.markdown("""
     
     /* 5. NUEVO: Área de escritura (Input) en AZUL */
     .stChatInput textarea {
-        background-color: #90D5FF !important; /* <--- TU COLOR AQUÍ */
+        background-color: #f0f2f6 !important; /* <--- TU COLOR AQUÍ */
         color: #000000 !important;            /* Texto negro para que se lea bien */
         border: 2px solid #5CA8FF !important; /* Un azul un pelín más oscuro para el borde */
         border-radius: 15px !important;
@@ -253,6 +253,7 @@ with tab3:
             st.success(f"Escenario: {escenario}")
             st.chat_message("assistant").write(intro)
             st.info("💡 Tip: Responde en tu mente o en voz alta para practicar.")
+
 
 
 
