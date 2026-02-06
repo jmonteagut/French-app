@@ -94,7 +94,7 @@ with st.sidebar:
     st.header("⚙️ Configuración")
     
     # 1. Selector de Idioma
-    idioma = st.selectbox("¿Qué quieres aprender?", ["Francés 🇫🇷", "Inglés 🇬🇧", "Italiano 🇮🇹", "Alemán 🇩🇪"])
+    idioma = st.selectbox("¿Qué quieres aprender?", ["Francés", "Inglés", "Italiano", "Alemán"])
     
     st.divider()
     
@@ -231,6 +231,7 @@ with tab3:
             st.success(f"Escenario: {escenario}")
             st.chat_message("assistant").write(intro)
             st.info("💡 Tip: Responde en tu mente o en voz alta para practicar.")
+
 
 
 
