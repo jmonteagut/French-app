@@ -4,7 +4,7 @@ import time
 
 # --- CONFIGURACIÓN VISUAL ---
 st.set_page_config(
-    page_title="unmute",
+    page_title="Unmute AI",
     page_icon="🌍",
     layout="wide"  # Usamos todo el ancho de la pantalla
 )
@@ -61,7 +61,7 @@ col1, col2 = st.columns([1, 4])
 with col1:
     st.image("https://cdn-icons-png.flaticon.com/512/3898/3898150.png", width=80)
 with col2:
-    st.title("unmute")
+    st.title("Unmute AI")
     st.markdown("🚀 *Aprende idiomas 3 veces más rápido con Inteligencia Artificial.*")
 
 st.markdown("---")
@@ -208,5 +208,6 @@ with tab3:
             st.success(f"Escenario: {escenario}")
             st.chat_message("assistant").write(intro)
             st.info("💡 Tip: Responde en tu mente o en voz alta para practicar.")
+
 
 
