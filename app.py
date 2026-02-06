@@ -12,47 +12,50 @@ st.set_page_config(
 # Estilos CSS personalizados: "Compact Mode"
 st.markdown("""
 <style>
-    /* 1. Quitamos el espacio en blanco gigante de arriba */
+    /* 1. Ajuste del espacio superior (Compact Mode) */
     .block-container {
         padding-top: 1rem !important;
         padding-bottom: 0rem !important;
     }
-    st.markdown("""
-<style>
-    /* ... (MANTÉN TU CÓDIGO CSS ANTERIOR AQUÍ: .block-container, h1, etc.) ... */
-
-    /* NUEVO: Personalizar el área de escritura (Input) */
-    .stChatInput textarea {
-        background-color: #90D5FF !important; /* Fondo amarillo pálido */
-        color: #333333 !important; /* Texto gris oscuro */
-        border: 2px solid #f9a825 !important; /* Borde naranja/dorado */
-        border-radius: 15px !important;
-    }
     
-    /* Opcional: Cambiar el icono de enviar */
-    .stChatInput button {
-        color: #f9a825 !important;
-    }
-
-</style>
-""", unsafe_allow_html=True)
-    
-    /* 2. Hacemos el título más compacto */
+    /* 2. Título compacto */
     h1 {
         margin-top: 0px !important;
         padding-top: 0px !important;
-        font-size: 2.5rem !important; /* Ajustamos tamaño si es muy grande */
     }
     
-    /* 3. Estilos de botones y cajas (lo que ya tenías) */
-    .stButton>button { width: 100%; border-radius: 10px; }
-    .highlight { background-color: #f0f2f6; padding: 15px; border-radius: 10px; border-left: 5px solid #ff4b4b; }
+    /* 3. Botones redondeados */
+    .stButton>button { 
+        width: 100%; 
+        border-radius: 10px; 
+    }
     
-    /* 4. Ocultamos el menú hamburguesa de arriba a la derecha y el footer de "Made with Streamlit" */
-    /* (Opcional: deja la app más limpia) */
+    /* 4. Cajas de texto de resultados */
+    .highlight { 
+        background-color: #f0f2f6; 
+        padding: 15px; 
+        border-radius: 10px; 
+        border-left: 5px solid #ff4b4b; 
+    }
+    
+    /* 5. NUEVO: Área de escritura (Input) en AZUL */
+    .stChatInput textarea {
+        background-color: #90D5FF !important; /* <--- TU COLOR AQUÍ */
+        color: #000000 !important;            /* Texto negro para que se lea bien */
+        border: 2px solid #5CA8FF !important; /* Un azul un pelín más oscuro para el borde */
+        border-radius: 15px !important;
+    }
+    
+    /* Cambiar el icono de enviar (la flechita) a azul oscuro */
+    .stChatInput button {
+        color: #004488 !important;
+    }
+    
+    /* 6. Ocultar menús de Streamlit */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
+    
 </style>
 """, unsafe_allow_html=True)
 
@@ -250,6 +253,7 @@ with tab3:
             st.success(f"Escenario: {escenario}")
             st.chat_message("assistant").write(intro)
             st.info("💡 Tip: Responde en tu mente o en voz alta para practicar.")
+
 
 
 
