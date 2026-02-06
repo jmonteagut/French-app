@@ -75,15 +75,19 @@ def obtener_prompt(tipo, fase, idioma_objetivo):
 
 # --- INTERFAZ PRINCIPAL ---
 
-# 1. HEADER CON ESTILO
-col1, col2 = st.columns([1, 4])
+# 1. HEADER COMPACTO
+col1, col2 = st.columns([1, 6]) # Hacemos la col2 más ancha para que el texto no salte de línea
 with col1:
-    st.image("https://cdn-icons-png.flaticon.com/512/3898/3898150.png", width=80)
+    # Logo un poco más pequeño (width=60 en vez de 80)
+    st.image("https://cdn-icons-png.flaticon.com/512/3898/3898150.png", width=60)
 with col2:
-    st.title("Unmute AI")
-    st.markdown("🚀 *Aprende idiomas 3 veces más rápido con Inteligencia Artificial.*")
+    # Usamos markdown en vez de title para controlar mejor el espaciado vertical
+    st.markdown("""
+    <h1 style='margin-bottom: 0px; margin-top: 0px;'>unmute.</h1>
+    <p style='margin-top: 0px; font-style: italic; color: gray;'>Speak first. Study later.</p>
+    """, unsafe_allow_html=True)
 
-st.markdown("---")
+st.divider() # Línea divisoria fina
 
 # 2. SIDEBAR (CONTROLES)
 with st.sidebar:
@@ -227,6 +231,7 @@ with tab3:
             st.success(f"Escenario: {escenario}")
             st.chat_message("assistant").write(intro)
             st.info("💡 Tip: Responde en tu mente o en voz alta para practicar.")
+
 
 
 
