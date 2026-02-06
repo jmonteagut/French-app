@@ -4,7 +4,7 @@ import time
 
 # --- CONFIGURACIÓN VISUAL ---
 st.set_page_config(
-    page_title="Polyglot AI",
+    page_title="unmute",
     page_icon="🌍",
     layout="wide"  # Usamos todo el ancho de la pantalla
 )
@@ -61,7 +61,7 @@ col1, col2 = st.columns([1, 4])
 with col1:
     st.image("https://cdn-icons-png.flaticon.com/512/3898/3898150.png", width=80)
 with col2:
-    st.title("Polyglot Agile AI")
+    st.title("unmute")
     st.markdown("🚀 *Aprende idiomas 3 veces más rápido con Inteligencia Artificial.*")
 
 st.markdown("---")
@@ -70,14 +70,34 @@ st.markdown("---")
 with st.sidebar:
     st.header("⚙️ Configuración")
     
-    # Selector de Idioma (¡La novedad!)
+    # Selector de Idioma
     idioma = st.selectbox("¿Qué quieres aprender?", ["Francés 🇫🇷", "Inglés 🇬🇧", "Italiano 🇮🇹", "Alemán 🇩🇪"])
     
     st.divider()
     
-    dia = st.slider("Día del Plan", 1, 30, 1)
+    # --- LÓGICA DE DÍAS (NUEVO) ---
+    # Inicializamos el contador de días si no existe
+    if 'dia_actual' not in st.session_state:
+        st.session_state.dia_actual = 1
+
+    # Botones de navegación
+    col_prev, col_next = st.columns(2)
+    with col_prev:
+        if st.button("⬅️ Anterior"):
+            if st.session_state.dia_actual > 1:
+                st.session_state.dia_actual -= 1
+    with col_next:
+        if st.button("Siguiente ➡️"):
+            if st.session_state.dia_actual < 30:
+                st.session_state.dia_actual += 1
+
+    # Variable 'dia' para usar en el resto de la app
+    dia = st.session_state.dia_actual
+    
+    # Barra de progreso visual (No se puede mover manualmente)
+    st.write(f"### 📆 Día {dia} de 30")
     progreso = dia / 30
-    st.progress(progreso, text=f"Progreso: {int(progreso*100)}%")
+    st.progress(progreso)
 
     # Lógica de fases
     if dia <= 7:
@@ -172,3 +192,4 @@ with tab3:
             st.success(f"Escenario: {escenario}")
             st.chat_message("assistant").write(intro)
             st.info("💡 Tip: Responde en tu mente o en voz alta para practicar.")
+
