@@ -83,8 +83,8 @@ with col1:
 with col2:
     # Usamos markdown en vez de title para controlar mejor el espaciado vertical
     st.markdown("""
-    <h1 style='margin-bottom: 0px; margin-top: 0px;'>unmute.</h1>
-    <p style='margin-top: 0px; font-style: italic; color: gray;'>Speak first. Study later.</p>
+    <h1 style='margin-bottom: 0px; margin-top: 0px;'>Unmute AI.</h1>
+    <p style='margin-top: 0px; font-style: italic; color: gray;'>Speak first. Study later.🚀</p>
     """, unsafe_allow_html=True)
 
 st.divider() # Línea divisoria fina
@@ -231,6 +231,7 @@ with tab3:
             st.success(f"Escenario: {escenario}")
             st.chat_message("assistant").write(intro)
             st.info("💡 Tip: Responde en tu mente o en voz alta para practicar.")
+
 
 
 
