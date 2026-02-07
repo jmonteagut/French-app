@@ -40,7 +40,7 @@ st.markdown("""
     
     /* 5. ÁREA DE ESCRITURA EN AZUL CIELO (Tu diseño) */
     .stChatInput textarea {
-        background-color: #90D5FF !important; 
+        background-color: #f0f2f6 !important; 
         color: #000000 !important;            
         border: 2px solid #5CA8FF !important; 
         border-radius: 15px !important;
@@ -261,6 +261,7 @@ with tab3:
             st.success(f"Escenario: {escenario}")
             st.chat_message("assistant").write(intro)
             st.info("💡 Tip: Responde en tu mente o en voz alta para practicar.")
+
 
 
 
