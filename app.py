@@ -11,7 +11,6 @@ st.set_page_config(
 
 # Estilos CSS personalizados: "Compact Mode"
 st.markdown("""
-st.markdown("""
 <style>
     /* 1. Ajuste del espacio superior (Compact Mode) */
     .block-container {
@@ -262,6 +261,7 @@ with tab3:
             st.success(f"Escenario: {escenario}")
             st.chat_message("assistant").write(intro)
             st.info("💡 Tip: Responde en tu mente o en voz alta para practicar.")
+
 
 
 
