@@ -11,10 +11,11 @@ st.set_page_config(
 
 # Estilos CSS personalizados: "Compact Mode"
 st.markdown("""
+st.markdown("""
 <style>
     /* 1. Ajuste del espacio superior (Compact Mode) */
     .block-container {
-        padding-top: 1rem !important;
+        padding-top: 3rem !important; /* Le damos un poco más de aire para que quepa la flecha */
         padding-bottom: 0rem !important;
     }
     
@@ -38,23 +39,31 @@ st.markdown("""
         border-left: 5px solid #ff4b4b; 
     }
     
-    /* 5. NUEVO: Área de escritura (Input) en AZUL */
+    /* 5. ÁREA DE ESCRITURA EN AZUL CIELO (Tu diseño) */
     .stChatInput textarea {
-        background-color: #f0f2f6 !important; /* <--- TU COLOR AQUÍ */
-        color: #000000 !important;            /* Texto negro para que se lea bien */
-        border: 2px solid #5CA8FF !important; /* Un azul un pelín más oscuro para el borde */
+        background-color: #90D5FF !important; 
+        color: #000000 !important;            
+        border: 2px solid #5CA8FF !important; 
         border-radius: 15px !important;
     }
     
-    /* Cambiar el icono de enviar (la flechita) a azul oscuro */
+    /* Icono de enviar en azul oscuro */
     .stChatInput button {
         color: #004488 !important;
     }
     
-    /* 6. Ocultar menús de Streamlit */
+    /* 6. ARREGLO DEL MENÚ: */
+    /* Ocultamos el menú de opciones (tres puntos) y el footer... */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    header {visibility: hidden;}
+    
+    /* ...PERO DEJAMOS VISIBLE LA CABECERA para que puedas ver la flecha del menú */
+    header {visibility: visible !important;} 
+    
+    /* Opcional: Hacemos la cabecera transparente para que no se vea una barra blanca fea */
+    [data-testid="stHeader"] {
+        background-color: rgba(0,0,0,0);
+    }
     
 </style>
 """, unsafe_allow_html=True)
@@ -253,6 +262,7 @@ with tab3:
             st.success(f"Escenario: {escenario}")
             st.chat_message("assistant").write(intro)
             st.info("💡 Tip: Responde en tu mente o en voz alta para practicar.")
+
 
 
 
