@@ -78,7 +78,7 @@ st.markdown("""
 
 </style>
 """, unsafe_allow_html=True)
-    }
+    
 
 
 # --- CONEXIÓN IA ---
@@ -263,6 +263,7 @@ if not st.session_state.day_completed:
         st.rerun()
 else:
     st.markdown('<div class="lively-card" style="text-align: center; background-color: #E8F5E9; border: none;">✅ <b>¡Lección completada!</b> Vuelve mañana para más.</div>', unsafe_allow_html=True)
+
 
 
 
