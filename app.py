@@ -43,59 +43,63 @@ def consultar_kai(mensajes, temperatura=0.7):
     except Exception as e:
         return f"Error: {e}"
 
-# --- 4. CEREBRO DE KAI (REGLAS BLINDADAS) ---
+# --- 4. CEREBRO DE KAI (MODO ACTOR / ANTI-LORO) ---
 def get_system_prompt(dia, fase, modo="practica", contexto_extra=""):
     
-    # REGLAS DE IDIOMA (ESTRUCTURA OBLIGATORIA)
+    # REGLA DE FORMATO (BILINGÜE)
     if dia <= 7:
-        # Aquí forzamos el orden: FRANCÉS PRIMERO -> (ESPAÑOL DESPUÉS)
-        instruccion_idioma = """
-        ERES UN TUTOR DE FRANCÉS.
-        REGLA SUPREMA DE IDIOMA:
-        1. Tu respuesta debe estar SIEMPRE en FRANCÉS.
-        2. Inmediatamente después de cada frase en francés, añade la traducción al español entre paréntesis.
-        ESTRUCTURA OBLIGATORIA: "Phrase en français (Frase en español)."
-        PROHIBIDO hablar solo en español.
+        formato_idioma = """
+        FORMATO OBLIGATORIO:
+        Escribe tu respuesta en FRANCÉS y añade la traducción al español entre paréntesis.
+        Ejemplo: "Oui, bien sûr! (¡Sí, claro!)"
         """
     elif dia <= 14:
-        instruccion_idioma = "Habla en francés sencillo. Usa español solo para aclarar dudas complejas."
+        formato_idioma = "Habla en francés. Usa español solo para aclarar dudas complejas."
     else:
-        instruccion_idioma = "Solo francés. Inmersión total."
+        formato_idioma = "Solo francés."
 
-    base = f"Eres Kai. Contexto: '{fase}'. {instruccion_idioma}"
+    base = f"""Eres Kai.
+    SITUACIÓN ACTUAL: '{fase}'.
+    {formato_idioma}"""
 
     if modo == "vocab":
         instruccion_extra = ""
         if dia <= 7:
-            instruccion_extra = "IMPORTANTE: Incluye OBLIGATORIAMENTE fórmulas de cortesía (S'il vous plaît, Merci) y estructuras para pedir (Je voudrais...)."
+            instruccion_extra = "IMPORTANTE: Incluye OBLIGATORIAMENTE 'S'il vous plaît', 'Merci' y 'Je voudrais...'."
         
-        return f"{base} Genera 5 palabras/frases clave en FRANCÉS. {instruccion_extra} Formato: Emoji Palabra (Pronunciación) - Traducción."
+        return f"{base} Genera 5 palabras/frases clave en FRANCÉS para sobrevivir a esta situación. {instruccion_extra} Formato: Emoji Palabra (Pronunciación) - Traducción."
 
     elif modo == "inicio_activo":
-        # Forzamos que la pregunta inicial sea en francés
-        return f"""{base} 
-        Genera una pregunta directa para iniciar la simulación '{fase}'.
-        La pregunta debe estar en FRANCÉS primero y traducida entre paréntesis.
-        No saludes con 'Hola'."""
+        # INICIO ACTIVO: Lanza la primera piedra
+        return f"""{base}
+        ACTÚA COMO EL PERSONAJE DE LA SITUACIÓN (Camarero, Vendedor, etc).
+        NO saludes diciendo 'Hola soy Kai, tu profesor'.
+        Entra directo en el rol. Haz una pregunta al usuario para empezar la interacción (en francés + español).
+        Ejemplo si es cafetería: 'Bonjour! Vous désirez? (¡Hola! ¿Qué desea?)'."""
 
     elif modo == "practica":
+        # AQUÍ ESTÁ EL CAMBIO CLAVE "ANTI-LORO"
         return f"""{base}
-        Mantén la conversación.
-        Si el usuario habla en español, tú RESPONDE EN FRANCÉS (con traducción si es día 1-7).
-        Si el usuario comete un error, repite su frase corregida integrándola en tu respuesta."""
+        TU ROL: Eres un ACTOR en esta situación. NO eres un profesor aburrido.
+        
+        REGLAS DE ORO:
+        1. PROHIBIDO REPETIR: Nunca repitas lo que el usuario acaba de decir. Ej: NO digas "Has dicho: quiero café".
+        2. RESPONDE AL CONTENIDO: Si el usuario pide café, DÁSELO o pregúntale cómo lo quiere. Sigue la corriente.
+        3. LIDERAZGO: Si la conversación decae, haz una nueva pregunta relacionada con la situación.
+        4. CORRECCIÓN INVISIBLE: No le digas "te has equivocado". Simplemente responde usando la forma correcta de su frase.
+           Ejemplo:
+           Usuario: "Yo querer agua"
+           Tú respondes: "D'accord, vous voulez de l'eau. (Vale, quiere agua.) Gazeuse ou plate? (¿Con gas o sin gas?)"
+        """
 
-    # --- ZONA DE EXAMEN (MANTENEMOS EL FIX DEL SEPARADOR) ---
+    # ZONA EXAMEN
     elif modo == "examen_generador":
         separator_instruction = "Separa cada ítem EXACTAMENTE con '|||'. NO uses guiones al inicio."
-        
-        if contexto_extra == "traduccion": 
-            return f"3 frases en ESPAÑOL sencillas sobre '{fase}' para traducir. {separator_instruction}"
-        elif contexto_extra == "quiz": 
-            return f"3 preguntas test cortas en FRANCÉS sobre '{fase}' (con traducción). {separator_instruction}"
-        elif contexto_extra == "roleplay": 
-            return f"Inicia un roleplay sobre '{fase}'. Tu primera frase en FRANCÉS (con traducción)."
+        if contexto_extra == "traduccion": return f"3 frases en ESPAÑOL sencillas sobre '{fase}' para traducir. {separator_instruction}"
+        elif contexto_extra == "quiz": return f"3 preguntas test cortas en FRANCÉS sobre '{fase}' (con traducción). {separator_instruction}"
+        elif contexto_extra == "roleplay": return f"Inicia un roleplay tenso sobre '{fase}'. Tu primera frase en FRANCÉS (con traducción)."
 
-    elif modo == "examen_roleplay_activo": return f"Roleplay examen. Francés prioritario."
+    elif modo == "examen_roleplay_activo": return f"Roleplay examen. Actúa y responde. No ayudes."
 
     elif modo == "corrector_final":
         return f"Evalúa. Formato: NOTA: [0-10]/10. FEEDBACK: [Resumen español]. TIPS: [Consejos español]."
@@ -246,7 +250,7 @@ elif st.session_state.modo_app == "practica":
                     st.session_state.examen_data = "roleplay"
                     msg = f"🎭 **ROLEPLAY**\n{raw}"
                 else:
-                    # LÓGICA DE SPLIT MANTENIDA '|||'
+                    # LÓGICA DE SPLIT MEJORADA CON SEPARADOR '|||'
                     qs = [q.strip() for q in raw.split("|||") if q.strip()]
                     if len(qs) < 3: qs = [q.strip() for q in raw.split("\n") if q.strip() and "?" in q]
                     if len(qs) < 3: qs = ["Traduce: 'Hola'", "Traduce: 'Gracias'", "Traduce: 'Adios'"]
@@ -260,6 +264,7 @@ elif st.session_state.modo_app == "practica":
                 st.session_state.nota_final = None
                 st.session_state.mensajes.append({"role": "assistant", "content": msg})
                 st.rerun()
+
 
 
 
