@@ -43,14 +43,14 @@ def consultar_kai(mensajes, temperatura=0.7):
     except Exception as e:
         return f"Error: {e}"
 
-# --- 4. CEREBRO DE KAI (MODO ACTOR / ANTI-LORO) ---
+# --- 4. CEREBRO DE KAI ---
 def get_system_prompt(dia, fase, modo="practica", contexto_extra=""):
     
     # REGLA DE FORMATO (BILINGÜE)
     if dia <= 7:
         formato_idioma = """
-        FORMATO OBLIGATORIO:
-        Escribe tu respuesta en FRANCÉS y añade la traducción al español entre paréntesis.
+        FORMATO OBLIGATORIO PARA LA PARTE DE FRANCÉS:
+        Escribe la frase en FRANCÉS y añade la traducción al español entre paréntesis.
         Ejemplo: "Oui, bien sûr! (¡Sí, claro!)"
         """
     elif dia <= 14:
@@ -69,27 +69,29 @@ def get_system_prompt(dia, fase, modo="practica", contexto_extra=""):
         
         return f"{base} Genera 5 palabras/frases clave en FRANCÉS para sobrevivir a esta situación. {instruccion_extra} Formato: Emoji Palabra (Pronunciación) - Traducción."
 
+    # --- CAMBIO AQUÍ: CONTEXTO + ACCIÓN ---
     elif modo == "inicio_activo":
-        # INICIO ACTIVO: Lanza la primera piedra
         return f"""{base}
-        ACTÚA COMO EL PERSONAJE DE LA SITUACIÓN (Camarero, Vendedor, etc).
-        NO saludes diciendo 'Hola soy Kai, tu profesor'.
-        Entra directo en el rol. Haz una pregunta al usuario para empezar la interacción (en francés + español).
-        Ejemplo si es cafetería: 'Bonjour! Vous désirez? (¡Hola! ¿Qué desea?)'."""
+        INSTRUCCIONES DE INICIO (ESTRICTAS):
+        1. CONTEXTO (En Español): Explica brevemente al alumno qué vamos a hacer y cuál es su rol.
+           Ejemplo: "Hoy vamos a practicar cómo pedir la cuenta. Tú eres el cliente."
+        
+        2. ACCIÓN (En Francés): Inmediatamente después, cambia de línea, entra en tu rol de personaje y lanza la primera pregunta.
+           (Recuerda poner la traducción entre paréntesis si es nivel principiante).
+           
+        Ejemplo Final:
+        "Hoy estás en una cafetería. Pídeme lo que quieras.
+        Bonjour! Vous désirez boire quelque chose? (¡Hola! ¿Desea beber algo?)"
+        """
 
     elif modo == "practica":
-        # AQUÍ ESTÁ EL CAMBIO CLAVE "ANTI-LORO"
         return f"""{base}
-        TU ROL: Eres un ACTOR en esta situación. NO eres un profesor aburrido.
+        TU ROL: Eres un ACTOR en esta situación.
         
         REGLAS DE ORO:
-        1. PROHIBIDO REPETIR: Nunca repitas lo que el usuario acaba de decir. Ej: NO digas "Has dicho: quiero café".
-        2. RESPONDE AL CONTENIDO: Si el usuario pide café, DÁSELO o pregúntale cómo lo quiere. Sigue la corriente.
-        3. LIDERAZGO: Si la conversación decae, haz una nueva pregunta relacionada con la situación.
-        4. CORRECCIÓN INVISIBLE: No le digas "te has equivocado". Simplemente responde usando la forma correcta de su frase.
-           Ejemplo:
-           Usuario: "Yo querer agua"
-           Tú respondes: "D'accord, vous voulez de l'eau. (Vale, quiere agua.) Gazeuse ou plate? (¿Con gas o sin gas?)"
+        1. PROHIBIDO REPETIR: Nunca repitas "Has dicho...".
+        2. FLUJO NATURAL: Responde a lo que pide el usuario.
+        3. CORRECCIÓN INVISIBLE: Si se equivoca, usa la forma correcta en tu respuesta sin regañar.
         """
 
     # ZONA EXAMEN
@@ -264,6 +266,7 @@ elif st.session_state.modo_app == "practica":
                 st.session_state.nota_final = None
                 st.session_state.mensajes.append({"role": "assistant", "content": msg})
                 st.rerun()
+
 
 
 
