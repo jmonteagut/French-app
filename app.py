@@ -1,277 +1,268 @@
-
-
-
 import streamlit as st
 from openai import OpenAI
+import random
 import time
 
-# --- CONFIGURACIÓN VISUAL ---
-st.set_page_config(
-    page_title="unmute.",
-    page_icon="⚡", # Icono de rayo, más energético
-    layout="wide"
-)
+# --- 1. CONFIGURACIÓN ---
+st.set_page_config(page_title="unmute.", page_icon="⚡", layout="mobile")
 
-# --- ESTILOS CSS "VIVOS" & COMPACTOS ---
+# --- 2. ESTILOS CSS (Diseño Kai Moderno) ---
 st.markdown("""
 <style>
-    /* 1. AJUSTE ESPACIO SUPERIOR GLOBAL */
-    .block-container {
-        padding-top: 3rem !important;
-        padding-bottom: 0rem !important; /* Reducido a 0 */
-    }
+    /* Estructura */
+    .block-container { padding-top: 2rem; padding-bottom: 5rem; }
     
-    /* 2. TÍTULO CON DEGRADADO */
+    /* Título */
     .gradient-text {
         background: linear-gradient(45deg, #FF5F6D, #FFC371);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        font-weight: 900;
-        font-size: 3rem;
-        margin: 0; padding: 0; line-height: 1.1;
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        font-weight: 900; font-size: 2.5rem; margin: 0;
     }
     
-    /* 3. BOTONES MODERNOS */
-    .stButton>button { 
-        width: 100%; border-radius: 12px; font-weight: 600; border: none;
-        transition: all 0.3s ease;
-    }
-    .stButton>button:hover {
-        transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    /* Tarjetas */
+    .vocab-card {
+        background-color: #F8F9FA; border-left: 5px solid #FF5F6D;
+        padding: 15px; border-radius: 12px; margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
     }
     
-    /* 4. TARJETAS FLOTANTES */
-    .lively-card {
-        background-color: #ffffff; padding: 20px; border-radius: 20px;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.08); border: 1px solid #f0f0f0;
-        margin-bottom: 15px;
-    }
+    /* Chat */
+    .stChatMessage { padding: 1rem; border-radius: 12px; margin-bottom: 0.5rem; }
+    .stChatInput textarea { border: 2px solid #FFC371 !important; border-radius: 15px; }
     
-    /* 5. ÁREA DE ESCRITURA AZUL (MANTENIDA) */
-    .stChatInput textarea {
-        background-color: #E3F2FD !important; /* Azul fresco */
-        color: #000000 !important; /* Texto negro para contraste máximo */
-        border: 2px solid #90CAF9 !important; 
-        border-radius: 15px !important;
-    }
-    .stChatInput button { color: #FF5F6D !important; }
-    
-    /* 6. MENÚS */
-    #MainMenu {visibility: hidden;} footer {visibility: hidden;}
-    header {visibility: visible !important;} 
-    [data-testid="stHeader"] {background-color: rgba(0,0,0,0);}
-    
-    /* 7. SIDEBAR */
-    [data-testid="stSidebar"] { background-color: #FAFAFA; border-right: 1px solid #E0E0E0; }
-
-    /* 8. NUEVO: REDUCCIÓN AGRESIVA DE ESPACIO EN PESTAÑAS */
-    /* Quita el padding interno del contenido de las pestañas */
-    [data-testid="stTabContent"] {
-        padding-top: 0.5rem !important;
-        padding-left: 0.5rem !important;
-        padding-right: 0.5rem !important;
-    }
-    /* Reduce el espacio entre los elementos dentro de la pestaña */
-    [data-testid="stVerticalBlock"] > div {
-        gap: 0.5rem !important;
-    }
-
+    /* Ocultar interfaz extra */
+    #MainMenu, footer { visibility: hidden; }
 </style>
 """, unsafe_allow_html=True)
-    
 
-
-# --- CONEXIÓN IA ---
+# --- 3. CONEXIÓN IA ---
 try:
     client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 except:
-    st.error("⚠️ Falta la API Key en los secretos.")
+    st.error("⚠️ Error: No encuentro la API Key. Configúrala en .streamlit/secrets.toml")
     st.stop()
 
-def consultar_ia(system_prompt, user_prompt):
+def consultar_kai(mensajes, temperatura=0.7):
     try:
-        with st.spinner("🧠 Pensando..."): # Spinner genérico
-            response = client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
-                temperature=0.7
-            )
+        response = client.chat.completions.create(
+            model="gpt-4o-mini", messages=mensajes, temperature=temperatura
+        )
         return response.choices[0].message.content
     except Exception as e:
         return f"Error: {e}"
 
-# --- LÓGICA DINÁMICA ---
-def obtener_prompt(tipo, fase, idioma_objetivo):
-    idioma_base = "Español"
-    base = f"Eres un tutor experto de {idioma_objetivo} para hispanohablantes. Metodología ágil, moderna y práctica."
-    
-    if tipo == "vocab":
-        return f"{base} Genera 5 palabras/frases de ALTA FRECUENCIA para la {fase}. No uses formato tabla. Usa formato de lista con emojis: '🔹 **Palabra ({idioma_objetivo})** / Pronunciación figurada / Significado ({idioma_base}) - *Ejemplo corto*'."
-    elif tipo == "drill":
-        return f"{base} Actúa como un nativo joven. Haz una pregunta corta, directa y natural en {idioma_objetivo} sobre: {fase}."
-    elif tipo == "roleplay":
-        return f"{base} Inicia una simulación breve en {idioma_objetivo}. Situación: {fase}. Eres el otro personaje. Empieza tú."
-    return base
+# --- 4. CEREBRO DE LA IA (PROMPTS) ---
+def get_system_prompt(dia, fase, modo="practica", tipo_examen=None):
+    # --- NIVEL DE AYUDA (PROGRESIÓN) ---
+    if dia <= 7: 
+        idioma_inst = "Eres bilingüe (Francés/Español). Usa el español entre paréntesis para explicar cosas difíciles. Estás enseñando a un principiante absoluto."
+    elif dia <= 14: 
+        idioma_inst = "Habla mayormente en Francés. Usa el español SOLO si el usuario comete un error grave o no entiende."
+    else: 
+        idioma_inst = "MODO INMERSIÓN: Habla SOLO en Francés. Si el usuario habla español, respóndele en francés."
 
-# --- INTERFAZ PRINCIPAL VIVA ---
+    base = f"Eres Kai, un tutor de francés joven y motivador. El tema de hoy es: '{fase}'. {idioma_inst}."
 
-# 1. HEADER NUEVO CON DEGRADADO
-col1, col2 = st.columns([1, 7])
-with col1:
-    # Usamos un emoji gigante en lugar de imagen por ahora, queda más pop
-    st.markdown("<div style='font-size: 4rem; text-align: center;'>⚡</div>", unsafe_allow_html=True)
-with col2:
-    # Aplicamos la clase de texto con degradado
-    st.markdown('<h1 class="gradient-text">unmute.</h1>', unsafe_allow_html=True)
-    st.markdown("<p style='margin-top: -10px; font-size: 1.1rem; color: gray;'>Speak first. Study later.</p>", unsafe_allow_html=True)
+    # --- MODOS ---
+    if modo == "vocab":
+        return f"{base} Genera 5 palabras/frases clave sobre el tema. Formato lista con emojis: '🇫🇷 Francés - 🇪🇸 Español'."
 
-st.divider()
+    elif modo == "practica":
+        return f"{base} El usuario está practicando. Mantén una charla fluida. IMPORTANTE: Corrige CADA error gramatical que cometa el usuario de forma amable antes de seguir hablando."
 
-# 2. SIDEBAR (CONTROLES)
+    elif modo == "examen_generador":
+        # Aquí la IA genera el contenido inicial del examen según el tipo que tocó en la ruleta
+        if tipo_examen == "traduccion":
+            return f"Genera 3 frases cortas en ESPAÑOL relacionadas con '{fase}'. El usuario deberá traducirlas al francés. Sepáralas con un guion medio (-). Ejemplo: Hola - Gracias - Adios"
+        elif tipo_examen == "quiz":
+            return f"Genera 3 preguntas cortas (tipo test o directas) en Francés sobre gramática o cultura relacionada con '{fase}'. Sepáralas con un guion medio (-)."
+        elif tipo_examen == "roleplay":
+            return f"Define un escenario corto de roleplay sobre '{fase}'. Eres un personaje (ej: camarero). Di SOLO tu primera frase para empezar la escena en Francés. No pongas guiones."
+
+    elif modo == "examen_roleplay_activo":
+        # En el roleplay de examen, Kai NO corrige, solo actúa
+        return f"Estamos en un Roleplay de examen sobre '{fase}'. Eres el personaje. Responde al usuario siguiendo la corriente. NO CORRIJAS ERRORES AHORA. Sé breve."
+
+    elif modo == "corrector_final":
+        return f"Actúa como un examinador estricto. Revisa el desempeño del usuario. Dale una nota final (0/10) y lista sus errores corregidos. Sé constructivo."
+
+# --- 5. GESTIÓN DE ESTADO (MEMORIA) ---
+if 'dia_actual' not in st.session_state: st.session_state.dia_actual = 1
+if 'mensajes' not in st.session_state: st.session_state.mensajes = []
+if 'vocabulario_dia' not in st.session_state: st.session_state.vocabulario_dia = None
+# Estados de la app: 'practica', 'examen_activo', 'examen_finalizado'
+if 'modo_app' not in st.session_state: st.session_state.modo_app = "practica"
+# Variables del examen
+if 'examen_tipo' not in st.session_state: st.session_state.examen_tipo = None # traduccion, quiz, roleplay
+if 'examen_data' not in st.session_state: st.session_state.examen_data = [] # Preguntas o contexto
+if 'examen_respuestas' not in st.session_state: st.session_state.examen_respuestas = [] # Lo que responde el usuario
+if 'examen_progreso' not in st.session_state: st.session_state.examen_progreso = 0
+
+# --- 6. SIDEBAR (NAVEGACIÓN) ---
 with st.sidebar:
-    st.header("⚙️ Configuración")
-    idioma = st.selectbox("Idioma Objetivo", ["Francés", "Inglés", "Italiano", "Alemán", "Japonés"])
-    st.divider()
-    
-    if 'dia_actual' not in st.session_state: st.session_state.dia_actual = 1
-    if 'day_completed' not in st.session_state: st.session_state.day_completed = False
-
-    col_prev, col_next = st.columns(2)
-    with col_prev:
-        if st.button("⬅️ Anterior"):
-            if st.session_state.dia_actual > 1:
-                st.session_state.dia_actual -= 1
-                st.rerun()
-    with col_next:
-        bloqueado = not st.session_state.day_completed
-        if st.button("Siguiente ➡️", disabled=bloqueado, type="primary" if not bloqueado else "secondary"):
-            if st.session_state.dia_actual < 30:
-                st.session_state.dia_actual += 1
-                st.session_state.day_completed = False
-                st.rerun()
-    
-    if not st.session_state.day_completed:
-        st.caption("🔒 Completa la lección para avanzar.")
-    else:
-        st.success("✨ ¡Nivel desbloqueado!")
-
+    st.header("🗺️ Tu Mapa")
     dia = st.session_state.dia_actual
-    st.write(f"### 📆 Día {dia} / 30")
-    progreso = dia / 30
-    # Color de la barra de progreso personalizado (Naranja vibrante)
-    st.markdown(
-        """
-        <style>
-            .stProgress > div > div > div > div {
-                background-color: #FFC371;
-                background-image: linear-gradient(315deg, #FFC371 0%, #FF5F6D 74%);
-            }
-        </style>""",
-        unsafe_allow_html=True,
-    )
-    st.progress(progreso)
-
-    if dia <= 7: fase, icono_fase = "Supervivencia Básica", "🆘"
-    elif dia <= 14: fase, icono_fase = "Conexión Social", "🤝"
-    elif dia <= 21: fase, icono_fase = "Resolución de Problemas", "🧩"
-    else: fase, icono_fase = "Fluidez y Opinión", "🗣️"
-    st.info(f"{icono_fase} **{fase}**")
-
-# 3. PESTAÑAS PRINCIPALES
-tab1, tab2, tab3 = st.tabs(["📚 Vocabulario", "⚡ Drills Rápidos", "🎭 Roleplay"])
-
-# --- TAB 1: VOCABULARIO (Usando las nuevas tarjetas) ---
-with tab1:
-    col_a, col_b = st.columns([2, 1])
-    with col_a:
-        st.subheader(f"Lección del Día {dia}")
-        st.write(f"Objetivo: Dominar el vocabulario de **{fase}**.")
-    with col_b:
-        if st.button("✨ Generar Lección", type="primary", use_container_width=True):
-            sys_p = obtener_prompt("vocab", fase, idioma)
-            resultado = consultar_ia(sys_p, f"Genera material para día {dia}.")
-            st.session_state['vocab_result'] = resultado
     
-    if 'vocab_result' in st.session_state:
-        # AQUI USAMOS LA NUEVA CLASE .lively-card
-        st.markdown(f'<div class="lively-card">{st.session_state["vocab_result"]}</div>', unsafe_allow_html=True)
-
-# --- TAB 2: DRILLS (SÚPER COMPACTO & CORREGIDO) ---
-with tab2:
-    # ✅ ESTA ES LA LÍNEA QUE FALTABA: Inicializar la memoria si no existe
-    if "mensajes_drill" not in st.session_state:
-        st.session_state.mensajes_drill = []
-
-    # 1. Cabecera y botón en una sola línea muy compacta
-    col_title, col_btn = st.columns([4, 1])
-    with col_title:
-        st.markdown("<h4 style='margin: 0; padding-top: 5px;'>🗣️ Entrenador</h4>", unsafe_allow_html=True)
-    with col_btn:
-        if st.button("🔄", help="Nueva Pregunta", use_container_width=True):
-            sys_p = obtener_prompt("drill", fase, idioma)
-            q = consultar_ia(sys_p, "Empieza.")
-            st.session_state.mensajes_drill = [{"role": "assistant", "content": q}]
-
-    # 2. Contenedor de chat con ALTURA REDUCIDA
-    chat_container = st.container(height=200) 
+    # Definir Fase
+    if dia <= 7: fase = "Supervivencia Básica"
+    elif dia <= 14: fase = "Vida Social y Gustos"
+    elif dia <= 21: fase = "Viajes y Ciudad"
+    else: fase = "Opinión y Debates"
     
-    with chat_container:
-        # Ahora sí funcionará porque la lista ya existe (aunque esté vacía)
-        for msg in st.session_state.mensajes_drill:
-            avatar = "🤖" if msg["role"] == "assistant" else "👤"
-            st.markdown("""<style>.stChatMessage {padding-top: 0.5rem; padding-bottom: 0.5rem;}</style>""", unsafe_allow_html=True)
-            with st.chat_message(msg["role"], avatar=avatar):
-                st.write(msg["content"])
+    st.progress(dia / 30)
+    st.caption(f"Día {dia} - {fase}")
 
-    # Input de chat
-    if prompt := st.chat_input(f"Responde en {idioma}..."):
-        st.session_state.mensajes_drill.append({"role": "user", "content": prompt})
-        with chat_container:
-            st.chat_message("user", avatar="👤").write(prompt)
-            sys_p = obtener_prompt("drill", fase, idioma)
-            contexto = str(st.session_state.mensajes_drill[-3:])
-            resp = consultar_ia(sys_p, f"Usuario: '{prompt}'. Contexto: {contexto}. Corrige y sigue.")
-            st.session_state.mensajes_drill.append({"role": "assistant", "content": resp})
-            st.chat_message("assistant", avatar="🤖").write(resp)
-
-# --- TAB 3: ROLEPLAY ---
-with tab3:
-    st.subheader("Simulador de Inmersión")
-    col_x, col_y = st.columns(2)
-    with col_x:
-        escenario = st.selectbox("Situación:", ["Cafetería/Bar", "Tienda de ropa", "Perdido en la calle", "Conociendo gente", "Entrevista de trabajo"])
-    with col_y:
-        st.write("")
-        st.write("")
-        start_rp = st.button("🎬 ¡Acción!", type="primary", use_container_width=True)
-
-    if start_rp:
-        sys_p = obtener_prompt("roleplay", f"{fase} - {escenario}", idioma)
-        intro = consultar_ia(sys_p, "Empieza.")
-        # Usamos una tarjeta viva para el escenario
-        st.markdown(f"""
-        <div class="lively-card" style="border-left: 5px solid #FF5F6D;">
-            <h4>📍 Escenario: {escenario}</h4>
-            <p>{intro}</p>
-        </div>
-        """, unsafe_allow_html=True)
-        st.info("💡 Tip: Responde en tu mente o en voz alta. ¡Actúa!")
-
-# --- FOOTER ---
-st.divider()
-if not st.session_state.day_completed:
-    st.write("### ¿Terminaste por hoy?")
-    # Botón grande con gradiente (truco CSS en el style del principio)
-    if st.button("🎉 Marcar Lección como Completada", type="primary", use_container_width=True):
-        st.session_state.day_completed = True
-        st.balloons()
-        time.sleep(1)
+    if st.button("🔄 Reiniciar Día"):
+        st.session_state.mensajes = []
+        st.session_state.vocabulario_dia = None
+        st.session_state.modo_app = "practica"
+        st.session_state.examen_tipo = None
+        st.session_state.examen_progreso = 0
         st.rerun()
-else:
-    st.markdown('<div class="lively-card" style="text-align: center; background-color: #E8F5E9; border: none;">✅ <b>¡Lección completada!</b> Vuelve mañana para más.</div>', unsafe_allow_html=True)
+
+# --- 7. INTERFAZ PRINCIPAL ---
+st.markdown('<h1 class="gradient-text">unmute.</h1>', unsafe_allow_html=True)
+
+# A) GENERAR VOCABULARIO (Automático al inicio)
+if not st.session_state.vocabulario_dia:
+    with st.spinner("Kai está preparando la lección..."):
+        prompt_sys = get_system_prompt(dia, fase, "vocab")
+        vocab = consultar_kai([{"role": "system", "content": prompt_sys}, {"role": "user", "content": "Vocabulario"}])
+        st.session_state.vocabulario_dia = vocab
+
+# Mostrar tarjeta siempre arriba
+with st.expander("📚 Vocabulario del Día (Revisar)", expanded=True):
+    st.markdown(f'<div class="vocab-card">{st.session_state.vocabulario_dia}</div>', unsafe_allow_html=True)
+
+st.divider()
+
+# B) ZONA DE CHAT (HISTORIAL)
+for msg in st.session_state.mensajes:
+    avatar = "🧢" if msg["role"] == "assistant" else "👤"
+    with st.chat_message(msg["role"], avatar=avatar):
+        st.write(msg["content"])
+
+# --- 8. LÓGICA DEL EXAMEN (LA RULETA) ---
+
+if st.session_state.modo_app == "examen_activo":
+    tipo = st.session_state.examen_tipo
+    progreso = st.session_state.examen_progreso
+    
+    # Texto del input según el tipo de examen
+    if tipo == "roleplay":
+        label_input = f"🎭 ROLEPLAY ({progreso+1}/3): Tu turno..."
+    else:
+        label_input = f"📝 PREGUNTA ({progreso+1}/3): Tu respuesta..."
+
+    # INPUT DEL EXAMEN
+    if respuesta := st.chat_input(label_input):
+        # 1. Guardar respuesta visualmente
+        st.session_state.mensajes.append({"role": "user", "content": respuesta})
+        st.session_state.examen_respuestas.append(respuesta) # Guardamos para corregir luego
+        
+        # 2. Lógica según tipo
+        st.session_state.examen_progreso += 1
+        
+        # ¿Terminó el examen (3 turnos)?
+        if st.session_state.examen_progreso >= 3:
+            st.session_state.modo_app = "examen_finalizado"
+            st.rerun()
+        else:
+            # Si NO ha terminado, preparamos el siguiente turno
+            if tipo == "roleplay":
+                # En roleplay, Kai debe responder para seguir la historia
+                prompt_sys = get_system_prompt(dia, fase, "examen_roleplay_activo")
+                # Contexto: últimas lineas
+                contexto_rp = st.session_state.mensajes[-3:] 
+                msg_kai = consultar_kai([{"role": "system", "content": prompt_sys}] + contexto_rp)
+                st.session_state.mensajes.append({"role": "assistant", "content": msg_kai})
+            else:
+                # En Traducción o Quiz, lanzamos la siguiente pregunta pre-generada
+                siguiente_p = st.session_state.examen_data[st.session_state.examen_progreso]
+                st.session_state.mensajes.append({"role": "assistant", "content": f"➡️ **Siguiente:** {siguiente_p}"})
+            
+            st.rerun()
+
+# --- 9. CORRECCIÓN DEL EXAMEN (FINAL) ---
+elif st.session_state.modo_app == "examen_finalizado":
+    if len(st.session_state.mensajes) > 0 and st.session_state.mensajes[-1]["role"] != "assistant" or "RESULTADO" not in st.session_state.mensajes[-1]["content"]:
+        with st.spinner("Kai está corrigiendo tu examen..."):
+            # Recopilar todo lo que pasó en el examen
+            log_examen = f"Tipo de Examen: {st.session_state.examen_tipo}\n"
+            for i, resp in enumerate(st.session_state.examen_respuestas):
+                log_examen += f"Turno {i+1}: Usuario dijo '{resp}'\n"
+            
+            prompt_sys = get_system_prompt(dia, fase, "corrector_final")
+            correccion = consultar_kai([
+                {"role": "system", "content": prompt_sys},
+                {"role": "user", "content": f"Corrige esto:\n{log_examen}"}
+            ])
+            
+            st.session_state.mensajes.append({"role": "assistant", "content": f"🎓 **RESULTADO FINAL:**\n\n{correccion}"})
+            st.balloons()
+            st.rerun()
+    
+    # Botón para avanzar de día
+    if st.button("🚀 ¡Día Superado! Ir al siguiente", type="primary"):
+        st.session_state.dia_actual += 1
+        st.session_state.mensajes = []
+        st.session_state.vocabulario_dia = None
+        st.session_state.modo_app = "practica"
+        st.session_state.examen_tipo = None
+        st.session_state.examen_progreso = 0
+        st.rerun()
+
+# --- 10. LÓGICA DE PRÁCTICA (CHAT NORMAL) ---
+elif st.session_state.modo_app == "practica":
+    # Input de Chat Normal
+    if prompt := st.chat_input("Practica con Kai (te corregirá)..."):
+        st.session_state.mensajes.append({"role": "user", "content": prompt})
+        
+        # Respuesta IA
+        prompt_sys = get_system_prompt(dia, fase, "practica")
+        historial = [{"role": "system", "content": prompt_sys}] + st.session_state.mensajes[-5:]
+        
+        with st.spinner("Escribiendo..."):
+            resp = consultar_kai(historial)
+        
+        st.session_state.mensajes.append({"role": "assistant", "content": resp})
+        st.rerun()
+
+    # BOTÓN PARA INICIAR EXAMEN (Aparece tras 2 mensajes)
+    if len(st.session_state.mensajes) >= 2:
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            if st.button("🎲 ¡RULETA DE EXAMEN!", type="primary", use_container_width=True):
+                # 1. Sortear tipo de examen
+                opciones = ["traduccion", "quiz", "roleplay"]
+                tipo_tocado = random.choice(opciones)
+                st.session_state.examen_tipo = tipo_tocado
+                
+                # 2. Generar contenido inicial
+                with st.spinner(f"Preparando examen de tipo: {tipo_tocado.upper()}..."):
+                    prompt_sys = get_system_prompt(dia, fase, "examen_generador", tipo_tocado)
+                    raw_content = consultar_kai([{"role": "system", "content": prompt_sys}, {"role": "user", "content": "Go"}])
+                    
+                    if tipo_tocado == "roleplay":
+                        # En roleplay, el raw_content es la primera frase de Kai
+                        msg_inicial = f"🎭 **EXAMEN DE ROLEPLAY**\nSitación: {raw_content}\n*(Sigue la corriente. No te corregiré hasta el final)*"
+                        st.session_state.examen_data = "roleplay_context" # No necesitamos lista de preguntas
+                    else:
+                        # En Traduccion/Quiz es una lista de preguntas separadas por guiones
+                        preguntas = [p.strip() for p in raw_content.split("-") if p.strip()]
+                        # Fallback por si la IA falla el formato
+                        if len(preguntas) < 3: preguntas = ["Pregunta 1", "Pregunta 2", "Pregunta 3"]
+                        st.session_state.examen_data = preguntas
+                        msg_inicial = f"📝 **EXAMEN DE {tipo_tocado.upper()}**\nContesta las 3 preguntas seguidas.\n\n**Pregunta 1:** {preguntas[0]}"
+
+                    # 3. Cambiar estado
+                    st.session_state.modo_app = "examen_activo"
+                    st.session_state.examen_progreso = 0
+                    st.session_state.examen_respuestas = []
+                    
+                    # 4. Anunciar inicio
+                    st.session_state.mensajes.append({"role": "assistant", "content": msg_inicial})
+                    st.rerun()
 
 
 
