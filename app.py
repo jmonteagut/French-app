@@ -4,7 +4,7 @@ import random
 import time
 
 # --- 1. CONFIGURACIÓN ---
-st.set_page_config(page_title="unmute.", page_icon="⚡", layout="mobile")
+st.set_page_config(page_title="unmute.", page_icon="⚡", layout="centered")
 
 # --- 2. ESTILOS CSS (Diseño Kai Moderno) ---
 st.markdown("""
@@ -263,6 +263,7 @@ elif st.session_state.modo_app == "practica":
                     # 4. Anunciar inicio
                     st.session_state.mensajes.append({"role": "assistant", "content": msg_inicial})
                     st.rerun()
+
 
 
 
