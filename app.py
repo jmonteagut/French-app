@@ -43,50 +43,62 @@ def consultar_kai(mensajes, temperatura=0.7):
     except Exception as e:
         return f"Error: {e}"
 
-# --- 4. CEREBRO DE KAI ---
+# --- 4. CEREBRO DE KAI (REGLAS BLINDADAS) ---
 def get_system_prompt(dia, fase, modo="practica", contexto_extra=""):
     
-    # REGLAS DE IDIOMA
+    # REGLAS DE IDIOMA (ESTRUCTURA OBLIGATORIA)
     if dia <= 7:
-        instruccion_idioma = "Eres tutor de PRINCIPIANTES. Tu Regla de Oro: Cuando hables francés, pon la traducción al español justo al lado entre paréntesis. Ejemplo: 'Bonjour (Hola)'."
+        # Aquí forzamos el orden: FRANCÉS PRIMERO -> (ESPAÑOL DESPUÉS)
+        instruccion_idioma = """
+        ERES UN TUTOR DE FRANCÉS.
+        REGLA SUPREMA DE IDIOMA:
+        1. Tu respuesta debe estar SIEMPRE en FRANCÉS.
+        2. Inmediatamente después de cada frase en francés, añade la traducción al español entre paréntesis.
+        ESTRUCTURA OBLIGATORIA: "Phrase en français (Frase en español)."
+        PROHIBIDO hablar solo en español.
+        """
     elif dia <= 14:
-        instruccion_idioma = "Habla francés sencillo. Usa español solo para emergencias."
+        instruccion_idioma = "Habla en francés sencillo. Usa español solo para aclarar dudas complejas."
     else:
-        instruccion_idioma = "Solo francés."
+        instruccion_idioma = "Solo francés. Inmersión total."
 
     base = f"Eres Kai. Contexto: '{fase}'. {instruccion_idioma}"
 
     if modo == "vocab":
-        # --- CAMBIO AQUÍ: OBLIGATORIEDAD DE CORTESÍA ---
         instruccion_extra = ""
         if dia <= 7:
-            instruccion_extra = "IMPORTANTE: Incluye OBLIGATORIAMENTE fórmulas de cortesía (S'il vous plaît, Merci) y la estructura para pedir cosas (Je voudrais...) adaptadas al contexto."
+            instruccion_extra = "IMPORTANTE: Incluye OBLIGATORIAMENTE fórmulas de cortesía (S'il vous plaît, Merci) y estructuras para pedir (Je voudrais...)."
         
-        return f"{base} Dame 5 palabras/frases clave en Francés. {instruccion_extra} Formato: Emoji Palabra (Pronunciación) - Traducción."
+        return f"{base} Genera 5 palabras/frases clave en FRANCÉS. {instruccion_extra} Formato: Emoji Palabra (Pronunciación) - Traducción."
 
     elif modo == "inicio_activo":
-        return f"{base} Inicia la situación '{fase}' con una pregunta directa (traducida al español). No saludes genéricamente."
+        # Forzamos que la pregunta inicial sea en francés
+        return f"""{base} 
+        Genera una pregunta directa para iniciar la simulación '{fase}'.
+        La pregunta debe estar en FRANCÉS primero y traducida entre paréntesis.
+        No saludes con 'Hola'."""
 
     elif modo == "practica":
-        return f"{base} Mantén la charla. Si el usuario habla español, responde en francés (traducido). Corrige errores repitiendo la frase bien dicha."
+        return f"""{base}
+        Mantén la conversación.
+        Si el usuario habla en español, tú RESPONDE EN FRANCÉS (con traducción si es día 1-7).
+        Si el usuario comete un error, repite su frase corregida integrándola en tu respuesta."""
 
-    # --- ARREGLO DEL QUIZ (MANTENIDO) ---
+    # --- ZONA DE EXAMEN (MANTENEMOS EL FIX DEL SEPARADOR) ---
     elif modo == "examen_generador":
-        separator_instruction = "Separa cada pregunta/frase EXACTAMENTE con el símbolo '|||' (tres barras verticales). NO uses guiones ni números al principio."
+        separator_instruction = "Separa cada ítem EXACTAMENTE con '|||'. NO uses guiones al inicio."
         
         if contexto_extra == "traduccion": 
-            return f"Dame 3 frases en ESPAÑOL sencillas sobre '{fase}' para traducir al francés. {separator_instruction}"
-        
+            return f"3 frases en ESPAÑOL sencillas sobre '{fase}' para traducir. {separator_instruction}"
         elif contexto_extra == "quiz": 
-            return f"Dame 3 preguntas tipo test cortas en Francés sobre '{fase}' (incluye traducción entre paréntesis). {separator_instruction}"
-        
+            return f"3 preguntas test cortas en FRANCÉS sobre '{fase}' (con traducción). {separator_instruction}"
         elif contexto_extra == "roleplay": 
-            return f"Inicia un roleplay sobre '{fase}'. Di solo tu primera frase (traducida)."
+            return f"Inicia un roleplay sobre '{fase}'. Tu primera frase en FRANCÉS (con traducción)."
 
-    elif modo == "examen_roleplay_activo": return f"Roleplay examen. No ayudes mucho."
+    elif modo == "examen_roleplay_activo": return f"Roleplay examen. Francés prioritario."
 
     elif modo == "corrector_final":
-        return f"Evalúa brevemente. Formato: NOTA: [0-10]/10. FEEDBACK: [Resumen]. TIPS: [Consejos]."
+        return f"Evalúa. Formato: NOTA: [0-10]/10. FEEDBACK: [Resumen español]. TIPS: [Consejos español]."
 
 # --- 5. GESTIÓN DE ESTADO ---
 if 'dia_actual' not in st.session_state: st.session_state.dia_actual = 1
@@ -234,11 +246,9 @@ elif st.session_state.modo_app == "practica":
                     st.session_state.examen_data = "roleplay"
                     msg = f"🎭 **ROLEPLAY**\n{raw}"
                 else:
-                    # LÓGICA DE SPLIT MEJORADA CON SEPARADOR '|||'
+                    # LÓGICA DE SPLIT MANTENIDA '|||'
                     qs = [q.strip() for q in raw.split("|||") if q.strip()]
-                    # FALLBACK: Si falla el '|||', intentamos saltos de línea o guiones
                     if len(qs) < 3: qs = [q.strip() for q in raw.split("\n") if q.strip() and "?" in q]
-                    # FALLBACK FINAL
                     if len(qs) < 3: qs = ["Traduce: 'Hola'", "Traduce: 'Gracias'", "Traduce: 'Adios'"]
                     
                     st.session_state.examen_data = qs[:3] 
@@ -250,6 +260,7 @@ elif st.session_state.modo_app == "practica":
                 st.session_state.nota_final = None
                 st.session_state.mensajes.append({"role": "assistant", "content": msg})
                 st.rerun()
+
 
 
 
