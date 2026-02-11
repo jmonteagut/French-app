@@ -6,7 +6,7 @@ import time
 # --- 1. CONFIGURACIÓN ---
 st.set_page_config(page_title="unmute.", page_icon="⚡", layout="centered")
 
-# --- 2. ESTILOS CSS ---
+# --- 2. ESTILOS VISUALES (Mantenemos tu diseño moderno) ---
 st.markdown("""
 <style>
     .block-container { padding-top: 2rem; padding-bottom: 5rem; }
@@ -42,41 +42,57 @@ def consultar_kai(mensajes, temperatura=0.7):
     except Exception as e:
         return f"Error: {e}"
 
-# --- 4. CEREBRO DE KAI (LOGICA DE INSTRUCTOR) ---
+# --- 4. CEREBRO METODOLÓGICO (TUS 5 PILARES) ---
 def get_system_prompt(dia, fase, modo="practica", contexto_extra=""):
-    # Nivel de rigurosidad con el idioma
-    if dia <= 7: idioma_inst = "Nivel Principiante: Usa español entre paréntesis SOLO para aclarar palabras muy difíciles."
-    elif dia <= 14: idioma_inst = "Nivel Intermedio: Intenta hablar solo en francés."
-    else: idioma_inst = "Nivel Avanzado: Solo francés."
+    
+    # PILAR 1: PLAN DE LENGUAJE (Objetivo utilizable, sin repeticiones)
+    if dia <= 7:
+        nivel = "PRINCIPIANTE - SUPERVIVENCIA"
+        instruccion_idioma = "Habla en francés simple. Usa español (entre paréntesis) SOLO para aclarar el significado si es vital."
+    elif dia <= 14:
+        nivel = "INTERMEDIO - SOCIAL"
+        instruccion_idioma = "Habla en francés natural. Evita el español salvo bloqueo total."
+    else:
+        nivel = "AVANZADO - FLUIDEZ"
+        instruccion_idioma = "Solo Francés."
 
-    base = f"Eres Kai, tu objetivo es que el usuario use el vocabulario de hoy: '{fase}'. {idioma_inst}."
+    base = f"""Eres Kai, un entrenador de francés enfocado en RESULTADOS PRIORITARIOS.
+    Objetivo: Francés utilizable para viajes, trabajo y el día a día.
+    Nivel actual: {nivel}. Contexto de hoy: '{fase}'.
+    {instruccion_idioma}."""
 
+    # PILAR 2: VOCABULARIO DE FRECUENCIA
     if modo == "vocab":
-        return f"{base} Genera 5 palabras/frases clave y útiles sobre el tema. Formato lista con emojis."
+        return f"""{base}
+        Enséñame las 5 palabras/frases en francés MÁS USADAS (Alta Frecuencia) para este contexto.
+        Formato de lista estricto:
+        Use emojis.
+        Estructura: **Palabra/Frase** (Pronunciación figurada sencilla para hispanohablantes) - Significado - *Ejemplo muy corto y natural*."""
 
-    # ESTE ES EL CAMBIO CLAVE: El inicio ya no es un saludo, es una SITUACIÓN
+    # PILAR 5: SIMULADOR DE CONVERSACIÓN REAL (INICIO)
     elif modo == "inicio_activo":
         return f"""{base}
-        NO SALUDES con un simple 'Hola'.
-        Inicia DIRECTAMENTE una simulación o haz una pregunta específica que obligue al usuario a usar el vocabulario de '{fase}'.
-        Ejemplo: Si el tema es 'Comida', di: 'Soy el camarero, ¿qué quieres comer hoy?'.
-        Sé breve y directo."""
+        Imita una conversación en francés natural para el escenario: '{fase}'.
+        NO saludes genéricamente. Entra directo en el rol (Camarero, Recepcionista, Amigo, Desconocido).
+        Hazme una pregunta corta para forzarme a hablar."""
 
-    # CORRECCIÓN CONSTANTE
+    # PILAR 3 Y 4: EJERCICIOS DE HABLA Y GRAMÁTICA A LA CARTA
     elif modo == "practica":
         return f"""{base}
-        Continúa la conversación/simulación.
-        REGLA DE ORO: Si el usuario comete un error gramatical, CORRÍGELO inmediatamente de forma breve entre paréntesis o negrita, y luego responde a lo que dijo para seguir la charla.
-        No seas pesado con las correcciones, sé ágil."""
+        Actúa como parte del simulador.
+        1. Hazme preguntas cortas en francés. Espera mi respuesta.
+        2. PILAR DE CORRECCIÓN: Corrígeme LIGERAMENTE y mejora mi expresión ("Así suena más natural: ...") sin interrumpir el ritmo.
+        3. PILAR DE GRAMÁTICA: NO expliques gramática a menos que sea un error que impida la comprensión. Si explicas, que sea en 1 frase enfocada a la utilidad.
+        Mantén el flujo de la conversación."""
 
-    # EXÁMENES (Igual que antes)
+    # EXÁMENES (Validación funcional)
     elif modo == "examen_generador":
-        if contexto_extra == "traduccion": return f"Genera 3 frases en ESPAÑOL sobre '{fase}' para traducir. Sepáralas con guion (-)."
-        elif contexto_extra == "quiz": return f"Genera 3 preguntas tipo test en Francés sobre '{fase}'. Sepáralas con guion (-)."
-        elif contexto_extra == "roleplay": return f"Define escenario roleplay sobre '{fase}'. Di tu primera frase."
+        if contexto_extra == "traduccion": return f"Dime 3 frases en ESPAÑOL muy útiles sobre '{fase}' que yo deba saber decir en francés. Sepáralas con guiones (-)."
+        elif contexto_extra == "quiz": return f"Hazme 3 preguntas rápidas en francés sobre cómo actuar en la situación '{fase}'. Sepáralas con guiones (-)."
+        elif contexto_extra == "roleplay": return f"Ponme en una situación difícil de '{fase}' (ej: hubo un problema). Di tu primera frase en francés para ver cómo reacciono."
 
-    elif modo == "examen_roleplay_activo": return f"Roleplay de examen '{fase}'. NO CORRIJAS NADA AHORA."
-    elif modo == "corrector_final": return f"Evalúa el examen (0/10) y lista los errores cometidos."
+    elif modo == "examen_roleplay_activo": return f"Simulación de examen '{fase}'. Ponme a prueba. No ayudes."
+    elif modo == "corrector_final": return f"Evalúa si fui capaz de comunicarme efectivamente (0/10). Sé breve y dame un consejo práctico."
 
 # --- 5. GESTIÓN DE ESTADO ---
 if 'dia_actual' not in st.session_state: st.session_state.dia_actual = 1
@@ -89,14 +105,23 @@ if 'examen_data' not in st.session_state: st.session_state.examen_data = []
 if 'examen_respuestas' not in st.session_state: st.session_state.examen_respuestas = [] 
 if 'examen_progreso' not in st.session_state: st.session_state.examen_progreso = 0
 
-# --- 6. SIDEBAR ---
+# --- 6. SIDEBAR (CONTENIDO ACTUALIZADO A SUPERVIVENCIA REAL) ---
 with st.sidebar:
-    st.header("🗺️ Mapa")
+    st.header("🗺️ Plan de 30 Días")
     dia = st.session_state.dia_actual
-    if dia <= 7: fase = "Supervivencia Básica"
-    elif dia <= 14: fase = "Vida Social"
-    elif dia <= 21: fase = "Viajes"
-    else: fase = "Debate"
+    
+    # FASES REDEFINIDAS (Vocabulario del día a día)
+    if dia == 1: fase = "Cafetería: Pedir y pagar"
+    elif dia == 2: fase = "Transporte: Metro y Tickets"
+    elif dia == 3: fase = "Supermercado: Básicos"
+    elif dia == 4: fase = "Restaurante: Alergias y Carta"
+    elif dia == 5: fase = "Calle: Pedir direcciones"
+    elif dia == 6: fase = "Emergencia: Farmacia/Dolor"
+    elif dia == 7: fase = "Hotel: Check-in y Wifi"
+    elif dia <= 14: fase = "Social: Conociendo gente"
+    elif dia <= 21: fase = "Trabajo y Llamadas"
+    else: fase = "Opinión Fluida"
+    
     st.progress(dia / 30)
     st.caption(f"Día {dia}: {fase}")
 
@@ -109,31 +134,30 @@ with st.sidebar:
 # --- 7. INTERFAZ PRINCIPAL ---
 st.markdown('<h1 class="gradient-text">unmute.</h1>', unsafe_allow_html=True)
 
-# A) GENERAR LECCIÓN AUTOMÁTICA
+# A) GENERACIÓN DE LECCIÓN (Automática)
 if not st.session_state.vocabulario_dia:
-    with st.spinner("Kai está preparando la clase..."):
-        # 1. Vocabulario
+    with st.spinner(f"Kai está preparando el simulador de '{fase}'..."):
+        # 1. Vocabulario de Frecuencia
         prompt_v = get_system_prompt(dia, fase, "vocab")
-        vocab = consultar_kai([{"role": "system", "content": prompt_v}, {"role": "user", "content": "Vocab"}])
+        vocab = consultar_kai([{"role": "system", "content": prompt_v}, {"role": "user", "content": "Generar"}])
         st.session_state.vocabulario_dia = vocab
         
-        # 2. INICIO ACTIVO DE LA LECCIÓN (Solo si el chat está vacío)
+        # 2. Inicio Activo (Simulador)
         if len(st.session_state.mensajes) == 0:
             prompt_i = get_system_prompt(dia, fase, "inicio_activo")
-            # Le pasamos el vocabulario generado para que sepa qué preguntar
             inicio = consultar_kai([
                 {"role": "system", "content": prompt_i}, 
-                {"role": "user", "content": f"Empieza la lección usando estas palabras: {vocab}"}
+                {"role": "user", "content": f"El usuario ya leyó el vocabulario: {vocab}. ¡Acción!"}
             ])
             st.session_state.mensajes.append({"role": "assistant", "content": inicio})
 
 # Tarjeta Vocabulario
-with st.expander("📚 Vocabulario Objetivo (Leéme primero)", expanded=True):
+with st.expander(f"📚 Vocabulario Útil: {fase}", expanded=True):
     st.markdown(f'<div class="vocab-card">{st.session_state.vocabulario_dia}</div>', unsafe_allow_html=True)
 
 st.divider()
 
-# B) CHAT DE LA LECCIÓN
+# B) CHAT (SIMULADOR)
 for msg in st.session_state.mensajes:
     avatar = "🧢" if msg["role"] == "assistant" else "👤"
     with st.chat_message(msg["role"], avatar=avatar):
@@ -141,11 +165,11 @@ for msg in st.session_state.mensajes:
 
 # --- 8. ZONA DE RESPUESTA ---
 
-# CASO 1: EXAMEN
+# MODO EXAMEN
 if st.session_state.modo_app == "examen_activo":
     tipo = st.session_state.examen_tipo
     prog = st.session_state.examen_progreso
-    label = f"🎭 ROLEPLAY ({prog+1}/3)" if tipo == "roleplay" else f"📝 PREGUNTA ({prog+1}/3)"
+    label = f"🎭 SIMULACIÓN ({prog+1}/3)" if tipo == "roleplay" else f"📝 RETO ({prog+1}/3)"
     
     if resp := st.chat_input(label):
         st.session_state.mensajes.append({"role": "user", "content": resp})
@@ -156,7 +180,6 @@ if st.session_state.modo_app == "examen_activo":
             st.session_state.modo_app = "examen_finalizado"
             st.rerun()
         else:
-            # Siguiente paso examen
             if tipo == "roleplay":
                 p_sys = get_system_prompt(dia, fase, "examen_roleplay_activo")
                 ctx = st.session_state.mensajes[-3:]
@@ -167,63 +190,63 @@ if st.session_state.modo_app == "examen_activo":
                 st.session_state.mensajes.append({"role": "assistant", "content": f"➡️ {next_q}"})
             st.rerun()
 
-# CASO 2: CORRECCIÓN EXAMEN
+# MODO CORRECCIÓN
 elif st.session_state.modo_app == "examen_finalizado":
     if len(st.session_state.mensajes) > 0 and "RESULTADO" not in st.session_state.mensajes[-1]["content"]:
-        with st.spinner("Evaluando..."):
+        with st.spinner("Analizando resultados..."):
             log = "\n".join([f"R{i+1}: {r}" for i, r in enumerate(st.session_state.examen_respuestas)])
             p_sys = get_system_prompt(dia, fase, "corrector_final")
             corr = consultar_kai([{"role": "system", "content": p_sys}, {"role": "user", "content": log}])
-            st.session_state.mensajes.append({"role": "assistant", "content": f"🎓 **RESULTADO:**\n\n{corr}"})
+            st.session_state.mensajes.append({"role": "assistant", "content": f"🎓 **FEEDBACK:**\n\n{corr}"})
             st.balloons()
             st.rerun()
     
-    if st.button("🚀 Siguiente Lección", type="primary"):
+    if st.button("🚀 Siguiente Día", type="primary"):
         st.session_state.dia_actual += 1
         st.session_state.mensajes = []
         st.session_state.vocabulario_dia = None
         st.session_state.modo_app = "practica"
         st.rerun()
 
-# CASO 3: PRÁCTICA (LECCIÓN ACTIVA)
+# MODO PRÁCTICA (SIMULADOR DE HABLA)
 elif st.session_state.modo_app == "practica":
-    # El input ahora invita a responder a la lección
-    if prompt := st.chat_input("Responde a Kai..."):
+    if prompt := st.chat_input("Responde para seguir el ritmo..."):
         st.session_state.mensajes.append({"role": "user", "content": prompt})
         
-        # Kai responde y corrige
+        # PROMPT DE CORRECCIÓN LIGERA
         p_sys = get_system_prompt(dia, fase, "practica")
         historial = [{"role": "system", "content": p_sys}] + st.session_state.mensajes[-5:]
         
-        with st.spinner("Kai está escribiendo..."):
+        with st.spinner("..."):
             resp = consultar_kai(historial)
         
         st.session_state.mensajes.append({"role": "assistant", "content": resp})
         st.rerun()
 
-    # Opción de examen tras practicar un poco
+    # Opción de examen tras practicar
     if len(st.session_state.mensajes) >= 3:
-        if st.button("🎲 Pasar a Examen Sorpresa", type="primary", use_container_width=True):
+        if st.button("💪 Demostrar lo aprendido (Reto)", type="primary", use_container_width=True):
             tipo = random.choice(["traduccion", "quiz", "roleplay"])
             st.session_state.examen_tipo = tipo
-            with st.spinner(f"Generando examen de {tipo}..."):
+            with st.spinner(f"Preparando reto de {tipo}..."):
                 p_sys = get_system_prompt(dia, fase, "examen_generador", tipo)
                 raw = consultar_kai([{"role": "system", "content": p_sys}, {"role": "user", "content": "Generar"}])
                 
                 if tipo == "roleplay":
                     st.session_state.examen_data = "roleplay"
-                    msg = f"🎭 **ROLEPLAY EXAMEN**\n{raw}"
+                    msg = f"🎭 **SITUACIÓN LÍMITE**\n{raw}"
                 else:
                     qs = [q.strip() for q in raw.split("-") if q.strip()]
                     if len(qs)<3: qs = ["Q1", "Q2", "Q3"]
                     st.session_state.examen_data = qs
-                    msg = f"📝 **QUIZ EXAMEN**\n1. {qs[0]}"
+                    msg = f"📝 **TRADUCE RÁPIDO**\n1. {qs[0]}"
 
                 st.session_state.modo_app = "examen_activo"
                 st.session_state.examen_progreso = 0
                 st.session_state.examen_respuestas = []
                 st.session_state.mensajes.append({"role": "assistant", "content": msg})
                 st.rerun()
+
 
 
 
