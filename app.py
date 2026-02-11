@@ -12,74 +12,72 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- ESTILOS CSS "VIVOS" (LIVELY MODE) ---
+# --- ESTILOS CSS "VIVOS" & COMPACTOS ---
 st.markdown("""
 <style>
-    /* 1. AJUSTE ESPACIO SUPERIOR */
+    /* 1. AJUSTE ESPACIO SUPERIOR GLOBAL */
     .block-container {
         padding-top: 3rem !important;
-        padding-bottom: 1rem !important;
+        padding-bottom: 0rem !important; /* Reducido a 0 */
     }
     
-    /* 2. NUEVO: TÍTULO CON DEGRADADO (GRADIENT TEXT) */
+    /* 2. TÍTULO CON DEGRADADO */
     .gradient-text {
-        background: linear-gradient(45deg, #FF5F6D, #FFC371); /* De rosa a naranja */
+        background: linear-gradient(45deg, #FF5F6D, #FFC371);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        font-weight: 900; /* Muy negrita */
+        font-weight: 900;
         font-size: 3rem;
-        margin: 0;
-        padding: 0;
-        line-height: 1.1;
+        margin: 0; padding: 0; line-height: 1.1;
     }
     
-    /* 3. BOTONES MÁS MODERNOS */
+    /* 3. BOTONES MODERNOS */
     .stButton>button { 
-        width: 100%; 
-        border-radius: 12px;
-        font-weight: 600;
-        border: none;
-        transition: all 0.3s ease; /* Animación suave al pasar el ratón */
+        width: 100%; border-radius: 12px; font-weight: 600; border: none;
+        transition: all 0.3s ease;
     }
     .stButton>button:hover {
-        transform: translateY(-2px); /* Pequeño salto al pasar el ratón */
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     }
     
-    /* 4. NUEVO: TARJETAS FLOTANTES (LIVELY CARDS) */
-    /* Reemplaza a la antigua clase .highlight */
+    /* 4. TARJETAS FLOTANTES */
     .lively-card {
-        background-color: #ffffff; /* Fondo blanco limpio */
-        padding: 25px; 
-        border-radius: 20px; /* Bordes muy redondeados */
-        box-shadow: 0 8px 20px rgba(0,0,0,0.08); /* Sombra suave para dar profundidad */
-        border: 1px solid #f0f0f0;
-        margin-bottom: 20px;
+        background-color: #ffffff; padding: 20px; border-radius: 20px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.08); border: 1px solid #f0f0f0;
+        margin-bottom: 15px;
     }
     
-    /* 5. ÁREA DE ESCRITURA (Mantenemos tu azul, pero más integrado) */
+    /* 5. ÁREA DE ESCRITURA AZUL (MANTENIDA) */
     .stChatInput textarea {
-        background-color: #E3F2FD !important; /* Azul un poco más claro y fresco */
-        color: #1565C0 !important; /* Texto azul oscuro */
-        border: 2px solid #BBDEFB !important; 
+        background-color: #E3F2FD !important; /* Azul fresco */
+        color: #000000 !important; /* Texto negro para contraste máximo */
+        border: 2px solid #90CAF9 !important; 
         border-radius: 15px !important;
-        box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
     }
-    
-    .stChatInput button {
-        color: #FF5F6D !important; /* Botón de enviar en color acento rosa */
-    }
+    .stChatInput button { color: #FF5F6D !important; }
     
     /* 6. MENÚS */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
+    #MainMenu {visibility: hidden;} footer {visibility: hidden;}
     header {visibility: visible !important;} 
     [data-testid="stHeader"] {background-color: rgba(0,0,0,0);}
     
-    /* 7. SIDEBAR MÁS LIMPIA */
-    [data-testid="stSidebar"] {
-        background-color: #FAFAFA; /* Gris muy claro */
-        border-right: 1px solid #E0E0E0;
+    /* 7. SIDEBAR */
+    [data-testid="stSidebar"] { background-color: #FAFAFA; border-right: 1px solid #E0E0E0; }
+
+    /* 8. NUEVO: REDUCCIÓN AGRESIVA DE ESPACIO EN PESTAÑAS */
+    /* Quita el padding interno del contenido de las pestañas */
+    [data-testid="stTabContent"] {
+        padding-top: 0.5rem !important;
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+    }
+    /* Reduce el espacio entre los elementos dentro de la pestaña */
+    [data-testid="stVerticalBlock"] > div {
+        gap: 0.5rem !important;
+    }
+
+</style>
+""", unsafe_allow_html=True)
     }
 
 </style>
@@ -267,6 +265,7 @@ if not st.session_state.day_completed:
         st.rerun()
 else:
     st.markdown('<div class="lively-card" style="text-align: center; background-color: #E8F5E9; border: none;">✅ <b>¡Lección completada!</b> Vuelve mañana para más.</div>', unsafe_allow_html=True)
+
 
 
 
