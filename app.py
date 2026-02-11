@@ -199,25 +199,33 @@ with tab1:
         # AQUI USAMOS LA NUEVA CLASE .lively-card
         st.markdown(f'<div class="lively-card">{st.session_state["vocab_result"]}</div>', unsafe_allow_html=True)
 
-# --- TAB 2: DRILLS ---
+# --- TAB 2: DRILLS (SÚPER COMPACTO) ---
 with tab2:
-    st.subheader("Entrenador Personal")
-    if "mensajes_drill" not in st.session_state: st.session_state.mensajes_drill = []
-
-    col_reset, _ = st.columns([1, 3])
-    with col_reset:
-        if st.button("🔄 Nueva Pregunta"):
+    # 1. Cabecera y botón en una sola línea muy compacta
+    col_title, col_btn = st.columns([4, 1])
+    with col_title:
+        # Usamos markdown con margen 0 en vez de subheader
+        st.markdown("<h4 style='margin: 0; padding-top: 5px;'>🗣️ Entrenador</h4>", unsafe_allow_html=True)
+    with col_btn:
+        # Botón pequeño solo con icono para ahorrar espacio
+        if st.button("🔄", help="Nueva Pregunta", use_container_width=True):
             sys_p = obtener_prompt("drill", fase, idioma)
             q = consultar_ia(sys_p, "Empieza.")
             st.session_state.mensajes_drill = [{"role": "assistant", "content": q}]
 
-    chat_container = st.container(height=300)
+    # 2. Contenedor de chat con ALTURA REDUCIDA (de 300 a 200 o 180)
+    # Esto es clave para que la caja de escribir suba.
+    chat_container = st.container(height=200) 
+    
     with chat_container:
         for msg in st.session_state.mensajes_drill:
             avatar = "🤖" if msg["role"] == "assistant" else "👤"
+            # Pequeño truco para reducir margen entre mensajes
+            st.markdown("""<style>.stChatMessage {padding-top: 0.5rem; padding-bottom: 0.5rem;}</style>""", unsafe_allow_html=True)
             with st.chat_message(msg["role"], avatar=avatar):
                 st.write(msg["content"])
 
+    # Input de chat (Se mantiene tu estilo azul gracias al CSS global)
     if prompt := st.chat_input(f"Responde en {idioma}..."):
         st.session_state.mensajes_drill.append({"role": "user", "content": prompt})
         with chat_container:
@@ -263,6 +271,7 @@ if not st.session_state.day_completed:
         st.rerun()
 else:
     st.markdown('<div class="lively-card" style="text-align: center; background-color: #E8F5E9; border: none;">✅ <b>¡Lección completada!</b> Vuelve mañana para más.</div>', unsafe_allow_html=True)
+
 
 
 
