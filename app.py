@@ -137,7 +137,7 @@ st.divider()
 # 2. SIDEBAR (CONTROLES)
 with st.sidebar:
     st.header("⚙️ Configuración")
-    idioma = st.selectbox("Idioma Objetivo", ["Francés 🇫🇷", "Inglés 🇬🇧", "Italiano 🇮🇹", "Alemán 🇩🇪", "Japonés 🇯🇵"])
+    idioma = st.selectbox("Idioma Objetivo", ["Francés", "Inglés", "Italiano", "Alemán", "Japonés"])
     st.divider()
     
     if 'dia_actual' not in st.session_state: st.session_state.dia_actual = 1
@@ -267,6 +267,7 @@ if not st.session_state.day_completed:
         st.rerun()
 else:
     st.markdown('<div class="lively-card" style="text-align: center; background-color: #E8F5E9; border: none;">✅ <b>¡Lección completada!</b> Vuelve mañana para más.</div>', unsafe_allow_html=True)
+
 
 
 
