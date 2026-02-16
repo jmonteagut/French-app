@@ -7,7 +7,7 @@ import re
 # --- 1. CONFIGURACIÓN ---
 st.set_page_config(page_title="unmute.", page_icon="⚡", layout="centered")
 
-# --- 2. ESTILOS (FIX CONTRASTE + FIX MÓVIL) ---
+# --- 2. ESTILOS ---
 st.markdown("""
 <style>
     /* Estructura general */
@@ -23,7 +23,7 @@ st.markdown("""
         font-weight: 900; font-size: 2.5rem; margin: 0;
     }
     
-    /* --- ARREGLO DEL VOCABULARIO INVISIBLE --- */
+    /* Tarjetas (Fix Modo Oscuro) */
     .vocab-card {
         background-color: #F8F9FA; 
         border-left: 5px solid #FF5F6D;
@@ -31,20 +31,15 @@ st.markdown("""
         border-radius: 12px; 
         margin-bottom: 20px;
         box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        
-        /* FUERZA EL COLOR NEGRO PARA QUE SE LEA EN MODO OSCURO */
-        color: #000000 !important; 
+        color: #000000 !important; /* Texto negro forzado */
     }
     
-    /* Asegurar que los negritas dentro de la tarjeta también sean negros */
-    .vocab-card strong {
-        color: #000000 !important;
-    }
+    .vocab-card strong { color: #000000 !important; }
     
     /* Chat bubbles */
     .stChatMessage { padding: 1rem; border-radius: 12px; margin-bottom: 0.5rem; }
     
-    /* --- FIX MÓVIL (Input elevado) --- */
+    /* Input elevado (Fix Móvil) */
     [data-testid="stChatInput"] {
         padding-bottom: 4rem !important;
         background-color: transparent !important;
@@ -55,11 +50,8 @@ st.markdown("""
         border-radius: 15px; 
     }
     
-    /* Limpieza de interfaz */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
-    [data-testid="stToolbar"] {visibility: hidden;}
+    /* Limpieza */
+    #MainMenu, footer, header, [data-testid="stToolbar"] {visibility: hidden;}
     
 </style>
 """, unsafe_allow_html=True)
@@ -86,9 +78,8 @@ def get_system_prompt(dia, fase, modo="practica", contexto_extra=""):
     # REGLA DE FORMATO (BILINGÜE)
     if dia <= 7:
         formato_idioma = """
-        FORMATO OBLIGATORIO:
-        Escribe tu respuesta en FRANCÉS y añade la traducción al español entre paréntesis.
-        Ejemplo: "Oui, bien sûr! (¡Sí, claro!)"
+        FORMATO OBLIGATORIO (Cuando hables francés):
+        Frase en Francés (Traducción en Español).
         """
     elif dia <= 14:
         formato_idioma = "Habla en francés. Usa español solo para aclarar dudas complejas."
@@ -107,18 +98,27 @@ def get_system_prompt(dia, fase, modo="practica", contexto_extra=""):
         return f"{base} Genera 5 palabras/frases clave en FRANCÉS para sobrevivir a esta situación. {instruccion_extra} Formato: Emoji Palabra (Pronunciación) - Traducción."
 
     elif modo == "inicio_activo":
-        return f"""{base}
-        INSTRUCCIONES DE INICIO (ESTRICTAS):
-        1. CONTEXTO (En Español): Explica brevemente al alumno qué vamos a hacer y cuál es su rol.
-        
-        2. ACCIÓN (En Francés): Inmediatamente después, cambia de línea, entra en tu rol de personaje y lanza la primera pregunta.
-           (Recuerda poner la traducción entre paréntesis si es nivel principiante).
-        """
+        # --- LÓGICA ESPECIAL DÍA 1 (ONBOARDING) ---
+        if dia == 1:
+            return f"""{base}
+            ¡ES EL PRIMER DÍA!
+            Instrucciones:
+            1. PRESENTACIÓN (En Español): Preséntate como Kai. Explica brevemente que esto es un programa de 30 días basado en "Roleplay Activo" para aprender a hablar sin miedo. Dile que tú serás su compañero de prácticas.
+            2. TRANSICIÓN (En Español): Di algo como "Hoy empezamos en una cafetería. ¡Vamos allá!".
+            3. ACCIÓN (En Francés + Español): Entra en el rol de Camarero y haz la primera pregunta.
+            """
+        else:
+            # DÍAS NORMALES
+            return f"""{base}
+            INSTRUCCIONES DE INICIO (ESTRICTAS):
+            1. CONTEXTO (En Español): Explica brevemente al alumno qué vamos a hacer y cuál es su rol.
+            2. ACCIÓN (En Francés): Inmediatamente después, cambia de línea, entra en tu rol de personaje y lanza la primera pregunta.
+               (Recuerda poner la traducción entre paréntesis si es nivel principiante).
+            """
 
     elif modo == "practica":
         return f"""{base}
         TU ROL: Eres un ACTOR en esta situación.
-        
         REGLAS DE ORO:
         1. PROHIBIDO REPETIR: Nunca repitas "Has dicho...".
         2. FLUJO NATURAL: Responde a lo que pide el usuario.
@@ -189,7 +189,7 @@ if not st.session_state.vocabulario_dia:
             st.session_state.mensajes.append({"role": "assistant", "content": inicio})
 
 with st.expander(f"📚 Vocabulario: {fase}", expanded=True):
-    # Aquí aplicamos la clase css .vocab-card que hemos arreglado
+    # CSS class aplicada para el contraste
     st.markdown(f'<div class="vocab-card">{st.session_state.vocabulario_dia}</div>', unsafe_allow_html=True)
 
 st.divider()
