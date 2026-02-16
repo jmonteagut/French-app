@@ -5,7 +5,7 @@ import time
 import re
 
 # --- 1. CONFIGURACIÓN ---
-st.set_page_config(page_title="unmute.", page_icon="⚡", layout="centered")
+st.set_page_config(page_title="unmute AI", page_icon="⚡", layout="centered")
 
 # --- 2. ESTILOS ---
 st.markdown("""
@@ -297,6 +297,7 @@ elif st.session_state.modo_app == "practica":
                 st.session_state.nota_final = None
                 st.session_state.mensajes.append({"role": "assistant", "content": msg})
                 st.rerun()
+
 
 
 
