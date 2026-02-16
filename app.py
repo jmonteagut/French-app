@@ -7,23 +7,60 @@ import re
 # --- 1. CONFIGURACIÓN ---
 st.set_page_config(page_title="unmute.", page_icon="⚡", layout="centered")
 
-# --- 2. ESTILOS ---
+# --- 2. ESTILOS (FIX CONTRASTE + FIX MÓVIL) ---
 st.markdown("""
 <style>
-    .block-container { padding-top: 2rem; padding-bottom: 5rem; }
+    /* Estructura general */
+    .block-container { 
+        padding-top: 2rem; 
+        padding-bottom: 8rem; 
+    }
+    
+    /* Título */
     .gradient-text {
         background: linear-gradient(45deg, #FF5F6D, #FFC371);
         -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         font-weight: 900; font-size: 2.5rem; margin: 0;
     }
+    
+    /* --- ARREGLO DEL VOCABULARIO INVISIBLE --- */
     .vocab-card {
-        background-color: #F8F9FA; border-left: 5px solid #FF5F6D;
-        padding: 15px; border-radius: 12px; margin-bottom: 20px;
+        background-color: #F8F9FA; 
+        border-left: 5px solid #FF5F6D;
+        padding: 15px; 
+        border-radius: 12px; 
+        margin-bottom: 20px;
         box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        
+        /* FUERZA EL COLOR NEGRO PARA QUE SE LEA EN MODO OSCURO */
+        color: #000000 !important; 
     }
+    
+    /* Asegurar que los negritas dentro de la tarjeta también sean negros */
+    .vocab-card strong {
+        color: #000000 !important;
+    }
+    
+    /* Chat bubbles */
     .stChatMessage { padding: 1rem; border-radius: 12px; margin-bottom: 0.5rem; }
-    .stChatInput textarea { border: 2px solid #FFC371 !important; border-radius: 15px; }
-    #MainMenu, footer { visibility: hidden; }
+    
+    /* --- FIX MÓVIL (Input elevado) --- */
+    [data-testid="stChatInput"] {
+        padding-bottom: 4rem !important;
+        background-color: transparent !important;
+    }
+    
+    .stChatInput textarea { 
+        border: 2px solid #FFC371 !important; 
+        border-radius: 15px; 
+    }
+    
+    /* Limpieza de interfaz */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    [data-testid="stToolbar"] {visibility: hidden;}
+    
 </style>
 """, unsafe_allow_html=True)
 
@@ -49,8 +86,8 @@ def get_system_prompt(dia, fase, modo="practica", contexto_extra=""):
     # REGLA DE FORMATO (BILINGÜE)
     if dia <= 7:
         formato_idioma = """
-        FORMATO OBLIGATORIO PARA LA PARTE DE FRANCÉS:
-        Escribe la frase en FRANCÉS y añade la traducción al español entre paréntesis.
+        FORMATO OBLIGATORIO:
+        Escribe tu respuesta en FRANCÉS y añade la traducción al español entre paréntesis.
         Ejemplo: "Oui, bien sûr! (¡Sí, claro!)"
         """
     elif dia <= 14:
@@ -69,19 +106,13 @@ def get_system_prompt(dia, fase, modo="practica", contexto_extra=""):
         
         return f"{base} Genera 5 palabras/frases clave en FRANCÉS para sobrevivir a esta situación. {instruccion_extra} Formato: Emoji Palabra (Pronunciación) - Traducción."
 
-    # --- CAMBIO AQUÍ: CONTEXTO + ACCIÓN ---
     elif modo == "inicio_activo":
         return f"""{base}
         INSTRUCCIONES DE INICIO (ESTRICTAS):
         1. CONTEXTO (En Español): Explica brevemente al alumno qué vamos a hacer y cuál es su rol.
-           Ejemplo: "Hoy vamos a practicar cómo pedir la cuenta. Tú eres el cliente."
         
         2. ACCIÓN (En Francés): Inmediatamente después, cambia de línea, entra en tu rol de personaje y lanza la primera pregunta.
            (Recuerda poner la traducción entre paréntesis si es nivel principiante).
-           
-        Ejemplo Final:
-        "Hoy estás en una cafetería. Pídeme lo que quieras.
-        Bonjour! Vous désirez boire quelque chose? (¡Hola! ¿Desea beber algo?)"
         """
 
     elif modo == "practica":
@@ -111,7 +142,6 @@ if 'dia_actual' not in st.session_state: st.session_state.dia_actual = 1
 if 'mensajes' not in st.session_state: st.session_state.mensajes = []
 if 'vocabulario_dia' not in st.session_state: st.session_state.vocabulario_dia = None
 if 'modo_app' not in st.session_state: st.session_state.modo_app = "practica"
-# Examen
 if 'examen_tipo' not in st.session_state: st.session_state.examen_tipo = None 
 if 'examen_data' not in st.session_state: st.session_state.examen_data = [] 
 if 'examen_respuestas' not in st.session_state: st.session_state.examen_respuestas = [] 
@@ -159,6 +189,7 @@ if not st.session_state.vocabulario_dia:
             st.session_state.mensajes.append({"role": "assistant", "content": inicio})
 
 with st.expander(f"📚 Vocabulario: {fase}", expanded=True):
+    # Aquí aplicamos la clase css .vocab-card que hemos arreglado
     st.markdown(f'<div class="vocab-card">{st.session_state.vocabulario_dia}</div>', unsafe_allow_html=True)
 
 st.divider()
