@@ -14,14 +14,14 @@ st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-    /* 1. Fuente base: Se aplica a todo de forma suave */
+    /* 1. Fuente base */
     html, body, .stApp {
         font-family: 'Inter', sans-serif;
         background-color: #F4F7F6;
         color: #2C3E50; 
     }
     
-    /* 2. Forzamos 'Inter' en textos y botones, pero SIN tocar los 'span' (iconos) */
+    /* 2. Forzamos 'Inter' en textos y botones */
     p, h1, h2, h3, h4, h5, h6, input, button, textarea, div.markdown-text-container {
         font-family: 'Inter', sans-serif !important;
         letter-spacing: -0.2px;
@@ -35,7 +35,6 @@ st.markdown("""
         letter-spacing: normal !important;
     }
 
-    /* Reducir márgenes superiores para aprovechar la pantalla */
     .block-container { padding-top: 1.5rem !important; padding-bottom: 2rem !important; }
     
     /* Títulos */
@@ -64,7 +63,7 @@ st.markdown("""
     .stChatMessage[data-testid="stChatMessage"]:nth-child(odd) { background-color: #EDF7F9; border: 1px solid #D6EAF8; border-radius: 18px 18px 18px 4px; }
     .stChatMessage[data-testid="stChatMessage"]:nth-child(even) { background-color: #FFFFFF; border: 1px solid #E0E6ED; border-radius: 18px 18px 4px 18px; }
     
-    /* Botones Control Panel */
+    /* Botones */
     button[data-testid="baseButton-primary"] {
         background: linear-gradient(135deg, #00B4DB, #0083B0) !important;
         border: none !important; border-radius: 10px !important; color: white !important; font-weight: 700 !important;
@@ -73,11 +72,13 @@ st.markdown("""
          border: 2px solid #00B4DB !important; color: #00B4DB !important; background: transparent !important; border-radius: 10px !important; font-weight: 700 !important;
     }
     
-    /* Input de chat moderno */
+    /* Input de chat */
     .stChatInput textarea { border: 2px solid #E0E6ED !important; border-radius: 16px !important; background: #FFFFFF !important; color: #2C3E50 !important; }
     .stChatInput textarea:focus { border-color: #00B4DB !important; }
     
-    #MainMenu, footer, header, [data-testid="stToolbar"] {visibility: hidden;}
+    /* CORRECCIÓN: Ocultamos el menú principal y el footer, pero dejamos el header para no perder el botón del menú lateral en móviles */
+    #MainMenu, footer, [data-testid="stToolbar"] {visibility: hidden;}
+    header {background-color: transparent !important;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -168,7 +169,6 @@ with st.sidebar:
     st.caption(f"Día {dia}: {fase}")
     st.divider()
 
-    # Perfil integrado directamente, sin expander
     st.markdown("### 👤 Tu Perfil")
     st.text_input("Tu nombre:", key="nombre_usuario", on_change=guardar_progreso)
     st.text_input("Hobbies (ej: cine, deporte):", key="intereses_usuario", on_change=guardar_progreso)
@@ -298,6 +298,7 @@ with col_chat:
             st.session_state.mensajes.append({"role": "assistant", "content": resp})
             guardar_progreso() 
             st.rerun()
+
 
 
 
