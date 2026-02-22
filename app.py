@@ -3,8 +3,8 @@ from openai import OpenAI
 import random
 import time
 import re
-import json # <--- NUEVO: Para guardar el progreso
-import os   # <--- NUEVO: Para comprobar si existe el archivo de guardado
+import json 
+import os   
 
 # --- 1. CONFIGURACIÓN ---
 st.set_page_config(page_title="unmute.", page_icon="⚡", layout="centered")
@@ -50,6 +50,16 @@ def consultar_kai(mensajes, temperatura=0.7):
 
 # --- 4. CEREBRO DE KAI ---
 def get_system_prompt(dia, fase, modo="practica", contexto_extra=""):
+    
+    # --- INYECCIÓN DEL PERFIL DEL USUARIO ---
+    perfil = ""
+    if st.session_state.nombre_usuario:
+        perfil += f" Se llama {st.session_state.nombre_usuario}."
+    if st.session_state.intereses_usuario:
+        perfil += f" Le gusta: {st.session_state.intereses_usuario}."
+        
+    instruccion_perfil = f"\nINFO DEL ALUMNO:{perfil} Úsalo sutilmente para personalizar la charla o los ejemplos si cuadra con la situación." if perfil else ""
+
     if dia <= 7:
         formato_idioma = "FORMATO OBLIGATORIO: Frase en Francés (Traducción en Español)."
     elif dia <= 14:
@@ -57,7 +67,7 @@ def get_system_prompt(dia, fase, modo="practica", contexto_extra=""):
     else:
         formato_idioma = "Solo francés."
 
-    base = f"Eres Kai. SITUACIÓN ACTUAL: '{fase}'. {formato_idioma}"
+    base = f"Eres Kai. SITUACIÓN ACTUAL: '{fase}'. {formato_idioma} {instruccion_perfil}"
 
     if modo == "vocab":
         instruccion_extra = "IMPORTANTE: Incluye 'S'il vous plaît', 'Merci' y 'Je voudrais...'." if dia <= 7 else ""
@@ -90,7 +100,6 @@ def get_system_prompt(dia, fase, modo="practica", contexto_extra=""):
 ARCHIVO_PROGRESO = "progreso_kai.json"
 
 def guardar_progreso():
-    """Guarda todas las variables de la sesión en un archivo local"""
     datos = {
         "dia_actual": st.session_state.dia_actual,
         "mensajes": st.session_state.mensajes,
@@ -100,13 +109,14 @@ def guardar_progreso():
         "examen_data": st.session_state.examen_data,
         "examen_respuestas": st.session_state.examen_respuestas,
         "examen_progreso": st.session_state.examen_progreso,
-        "nota_final": st.session_state.nota_final
+        "nota_final": st.session_state.nota_final,
+        "nombre_usuario": st.session_state.nombre_usuario,      # <--- GUARDAMOS EL NOMBRE
+        "intereses_usuario": st.session_state.intereses_usuario # <--- GUARDAMOS LOS HOBBIES
     }
     with open(ARCHIVO_PROGRESO, "w", encoding="utf-8") as f:
         json.dump(datos, f, ensure_ascii=False, indent=4)
 
 def cargar_progreso():
-    """Carga los datos si el archivo existe"""
     if os.path.exists(ARCHIVO_PROGRESO):
         with open(ARCHIVO_PROGRESO, "r", encoding="utf-8") as f:
             return json.load(f)
@@ -117,11 +127,9 @@ if 'iniciado' not in st.session_state:
     datos_guardados = cargar_progreso()
     
     if datos_guardados:
-        # Si hay partida guardada, restauramos todo
         for key, value in datos_guardados.items():
             st.session_state[key] = value
     else:
-        # Si es la primera vez, valores por defecto
         st.session_state.dia_actual = 1
         st.session_state.mensajes = []
         st.session_state.vocabulario_dia = None
@@ -131,6 +139,8 @@ if 'iniciado' not in st.session_state:
         st.session_state.examen_respuestas = [] 
         st.session_state.examen_progreso = 0
         st.session_state.nota_final = None
+        st.session_state.nombre_usuario = ""      # <--- VARIABLE NUEVA
+        st.session_state.intereses_usuario = ""   # <--- VARIABLE NUEVA
         
     st.session_state.iniciado = True
 
@@ -152,7 +162,17 @@ with st.sidebar:
     st.progress(dia / 30)
     st.caption(f"Día {dia}: {fase}")
 
-    # Ahora reiniciar borra el archivo de guardado
+    st.divider()
+
+    # --- UI DEL PERFIL SILENCIOSO ---
+    with st.expander("👤 Tu Perfil (Opcional)", expanded=False):
+        st.caption("Kai usará esto para personalizar tus clases.")
+        # El parámetro 'on_change' hace que se guarde automáticamente en el JSON al escribir
+        st.text_input("Tu nombre:", key="nombre_usuario", on_change=guardar_progreso)
+        st.text_input("Tus hobbies (ej: cine, deportes):", key="intereses_usuario", on_change=guardar_progreso)
+    
+    st.divider()
+
     if st.button("🔄 Borrar Partida y Reiniciar"):
         if os.path.exists(ARCHIVO_PROGRESO):
             os.remove(ARCHIVO_PROGRESO)
@@ -161,6 +181,7 @@ with st.sidebar:
         st.session_state.dia_actual = 1
         st.session_state.modo_app = "practica"
         st.session_state.examen_progreso = 0
+        # Ojo: No borramos el nombre y hobbies por si quiere reiniciar manteniendo su perfil
         st.rerun()
 
 # --- 8. INTERFAZ ---
@@ -177,7 +198,7 @@ if not st.session_state.vocabulario_dia:
             prompt_i = get_system_prompt(dia, fase, "inicio_activo")
             inicio = consultar_kai([{"role": "system", "content": prompt_i}, {"role": "user", "content": f"Vocabulario: {vocab}. Empieza."}])
             st.session_state.mensajes.append({"role": "assistant", "content": inicio})
-            guardar_progreso() # Guardamos tras la generación inicial
+            guardar_progreso() 
 
 with st.expander(f"📚 Vocabulario: {fase}", expanded=True):
     st.markdown(f'<div class="vocab-card">{st.session_state.vocabulario_dia}</div>', unsafe_allow_html=True)
@@ -225,7 +246,73 @@ elif st.session_state.modo_app == "examen_finalizado":
     if len(st.session_state.mensajes) > 0 and "RESULTADO" not in st.session_state.mensajes[-1]["content"]:
         with st.spinner("Evaluando..."):
             log = "\n".join([f"R{i+1}: {r}" for i, r in enumerate(st.session_state.examen_respuestas)])
-            p_sys
+            p_sys = get_system_prompt(dia, fase, "corrector_final")
+            corr = consultar_kai([{"role": "system", "content": p_sys}, {"role": "user", "content": log}])
+            st.session_state.mensajes.append({"role": "assistant", "content": f"📊 **RESULTADO:**\n\n{corr}"})
+            match = re.search(r"NOTA:\s*(\d+)", corr)
+            st.session_state.nota_final = int(match.group(1)) if match else 5
+            guardar_progreso()
+            st.rerun()
+
+    nota = st.session_state.nota_final if st.session_state.nota_final is not None else 0
+    if nota <= 5:
+        st.error(f"Nota: {nota}/10. ¡Inténtalo de nuevo!")
+        if st.button("🔄 REPETIR EXAMEN", type="primary"):
+            st.session_state.modo_app = "practica"
+            st.session_state.examen_respuestas = []
+            st.session_state.examen_progreso = 0
+            st.session_state.nota_final = None
+            guardar_progreso()
+            st.rerun()
+    else:
+        st.balloons()
+        st.success(f"¡Aprobado: {nota}/10!")
+        if st.button("🚀 SIGUIENTE DÍA", type="primary"):
+            st.session_state.dia_actual += 1
+            st.session_state.mensajes = []
+            st.session_state.vocabulario_dia = None
+            st.session_state.modo_app = "practica"
+            st.session_state.nota_final = None
+            guardar_progreso()
+            st.rerun()
+
+# PRÁCTICA
+elif st.session_state.modo_app == "practica":
+    if prompt := st.chat_input("Escribe..."):
+        st.session_state.mensajes.append({"role": "user", "content": prompt})
+        p_sys = get_system_prompt(dia, fase, "practica")
+        hist = [{"role": "system", "content": p_sys}] + st.session_state.mensajes[-5:]
+        with st.spinner("..."):
+            resp = consultar_kai(hist)
+        st.session_state.mensajes.append({"role": "assistant", "content": resp})
+        guardar_progreso() 
+        st.rerun()
+
+    if len(st.session_state.mensajes) >= 3:
+        if st.button("🔥 EXAMEN", type="primary", use_container_width=True):
+            tipo = random.choice(["traduccion", "quiz", "roleplay"])
+            st.session_state.examen_tipo = tipo
+            with st.spinner(f"Generando {tipo}..."):
+                p_sys = get_system_prompt(dia, fase, "examen_generador", tipo)
+                raw = consultar_kai([{"role": "system", "content": p_sys}, {"role": "user", "content": "Generar"}])
+                
+                if tipo == "roleplay":
+                    st.session_state.examen_data = "roleplay"
+                    msg = f"🎭 **ROLEPLAY**\n{raw}"
+                else:
+                    qs = [q.strip() for q in raw.split("|||") if q.strip()]
+                    if len(qs) < 3: qs = [q.strip() for q in raw.split("\n") if q.strip() and "?" in q]
+                    if len(qs) < 3: qs = ["Traduce: 'Hola'", "Traduce: 'Gracias'", "Traduce: 'Adios'"]
+                    st.session_state.examen_data = qs[:3] 
+                    msg = f"📝 **EXAMEN**\n1. {qs[0]}"
+
+                st.session_state.modo_app = "examen_activo"
+                st.session_state.examen_progreso = 0
+                st.session_state.examen_respuestas = []
+                st.session_state.nota_final = None
+                st.session_state.mensajes.append({"role": "assistant", "content": msg})
+                guardar_progreso() 
+                st.rerun()
 
 
 
