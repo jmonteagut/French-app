@@ -7,27 +7,130 @@ import json
 import os   
 
 # --- 1. CONFIGURACIÓN ---
-st.set_page_config(page_title="unmute.", page_icon="⚡", layout="centered")
+st.set_page_config(page_title="unmute.", page_icon="🌊", layout="centered")
 
-# --- 2. ESTILOS VISUALES ---
+# --- 2. ESTILOS VISUALES ZEN (NUEVO) ---
 st.markdown("""
 <style>
-    .block-container { padding-top: 2rem; padding-bottom: 8rem; }
+    /* Fuente Nunito: Limpia y amigable */
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap');
+
+    html, body, [class*="css"] {
+        font-family: 'Nunito', sans-serif !important;
+        color: #2C3E50; /* Texto gris oscuro, no negro puro */
+    }
+    
+    /* Fondo general muy suave */
+    .stApp {
+        background-color: #F4F7F6;
+    }
+
+    /* Contenedor principal */
+    .block-container { 
+        padding-top: 2rem; 
+        padding-bottom: 9rem; 
+        max-width: 800px;
+    }
+    
+    /* Título con degradado relajante (Azul Océano) */
     .gradient-text {
-        background: linear-gradient(45deg, #FF5F6D, #FFC371);
-        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        font-weight: 900; font-size: 2.5rem; margin: 0;
+        background: linear-gradient(135deg, #00B4DB, #0083B0);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 800; 
+        font-size: 3rem; 
+        text-align: center;
+        margin-bottom: 0.5rem;
+        letter-spacing: -1px;
     }
+    
+    /* Subtítulo */
+    .subtitle {
+        text-align: center;
+        color: #7F8C8D;
+        margin-bottom: 2rem;
+        font-size: 1.1rem;
+    }
+    
+    /* Tarjetas (Vocabulario y Perfil) - Estilo minimalista */
+    .vocab-card, .stExpander {
+        background: #FFFFFF; 
+        border: 1px solid #E0E6ED;
+        border-radius: 16px; 
+        box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        transition: all 0.3s ease;
+        color: #2C3E50 !important;
+    }
+    
+    /* Acento de color para la tarjeta de vocabulario */
     .vocab-card {
-        background-color: #F8F9FA; border-left: 5px solid #FF5F6D;
-        padding: 15px; border-radius: 12px; margin-bottom: 20px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        color: #000000 !important; 
+        border-left: 6px solid #00B4DB;
+        padding: 20px;
+        margin-bottom: 25px;
     }
-    .vocab-card strong { color: #000000 !important; }
-    .stChatMessage { padding: 1rem; border-radius: 12px; margin-bottom: 0.5rem; }
-    [data-testid="stChatInput"] { padding-bottom: 4rem !important; background-color: transparent !important; }
-    .stChatInput textarea { border: 2px solid #FFC371 !important; border-radius: 15px; }
+
+    .vocab-card strong { color: #0083B0 !important; font-weight: 700; }
+    
+    /* Burbujas de chat (Diferenciadas y suaves) */
+    /* Kai (Asistente) - Azul muy claro */
+    .stChatMessage[data-testid="stChatMessage"]:nth-child(odd) {
+        background-color: #EDF7F9;
+        border: 1px solid #D6EAF8;
+        border-radius: 18px 18px 18px 4px;
+    }
+    /* Usuario - Blanco neutro */
+    .stChatMessage[data-testid="stChatMessage"]:nth-child(even) {
+        background-color: #FFFFFF;
+        border: 1px solid #E0E6ED;
+        border-radius: 18px 18px 4px 18px;
+    }
+    .stChatMessage { padding: 1.2rem; margin-bottom: 1rem; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+
+    
+    /* Botones primarios (Azul Zen) */
+    button[data-testid="baseButton-primary"] {
+        background: linear-gradient(135deg, #00B4DB, #0083B0) !important;
+        border: none !important;
+        border-radius: 12px !important; /* Un poco más cuadrados */
+        color: white !important;
+        font-weight: 700 !important;
+        padding: 0.6rem 1.5rem !important;
+        transition: all 0.2s ease !important;
+        box-shadow: 0 4px 6px rgba(0, 180, 219, 0.2) !important;
+    }
+    button[data-testid="baseButton-primary"]:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 12px rgba(0, 180, 219, 0.3) !important;
+    }
+    /* Botón secundario (Pistas) */
+    button[data-testid="baseButton-secondary"] {
+         border: 2px solid #00B4DB !important;
+         color: #00B4DB !important;
+         background: transparent !important;
+         border-radius: 12px !important;
+         font-weight: 700 !important;
+    }
+    
+    /* Input de chat */
+    .stChatInput textarea { 
+        border: 2px solid #E0E6ED !important; 
+        border-radius: 16px !important; 
+        background: #FFFFFF !important;
+        padding: 12px 15px !important;
+        box-shadow: 0 -4px 15px rgba(0,0,0,0.03) !important;
+        color: #2C3E50 !important;
+    }
+    .stChatInput textarea:focus {
+        border-color: #00B4DB !important;
+    }
+    
+    /* Fix Móvil */
+    [data-testid="stChatInput"] { 
+        padding-bottom: 4rem !important; 
+        background-color: #F4F7F6 !important; /* Mismo color que el fondo */
+    }
+    
+    /* Ocultar elementos de sistema */
     #MainMenu, footer, header, [data-testid="stToolbar"] {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
@@ -52,7 +155,6 @@ def consultar_kai(mensajes, temperatura=0.7):
 def get_system_prompt(dia, fase, modo="practica", contexto_extra=""):
     
     perfil = ""
-    # Evitamos errores si las variables de perfil no existen aún
     nombre = st.session_state.get('nombre_usuario', "")
     hobbies = st.session_state.get('intereses_usuario', "")
     
@@ -137,16 +239,13 @@ if 'iniciado' not in st.session_state:
     datos_guardados = cargar_progreso()
     
     if datos_guardados:
-        # Cargar datos existentes
         for key, value in datos_guardados.items():
             st.session_state[key] = value
-            
-        # Parche de seguridad: si cargamos una partida antigua que no tenía estas variables, las creamos
+        # Parches de seguridad
         if 'pistas_usadas' not in st.session_state: st.session_state.pistas_usadas = 0
         if 'nombre_usuario' not in st.session_state: st.session_state.nombre_usuario = ""
         if 'intereses_usuario' not in st.session_state: st.session_state.intereses_usuario = ""
     else:
-        # Valores iniciales limpios
         st.session_state.dia_actual = 1
         st.session_state.mensajes = []
         st.session_state.vocabulario_dia = None
@@ -200,8 +299,10 @@ with st.sidebar:
         st.session_state.pistas_usadas = 0 
         st.rerun()
 
-# --- 8. INTERFAZ ---
+# --- 8. INTERFAZ PRINCIPAL ---
 st.markdown('<h1 class="gradient-text">unmute.</h1>', unsafe_allow_html=True)
+st.markdown('<p class="subtitle">Tu compañero de francés sin miedo.</p>', unsafe_allow_html=True)
+
 
 # A) INICIO
 if not st.session_state.vocabulario_dia:
@@ -216,13 +317,12 @@ if not st.session_state.vocabulario_dia:
             st.session_state.mensajes.append({"role": "assistant", "content": inicio})
             guardar_progreso() 
 
-with st.expander(f"📚 Vocabulario: {fase}", expanded=True):
+with st.expander(f"📚 Vocabulario Objetivo", expanded=True):
     st.markdown(f'<div class="vocab-card">{st.session_state.vocabulario_dia}</div>', unsafe_allow_html=True)
-
-st.divider()
 
 # B) CHAT
 for msg in st.session_state.mensajes:
+    # --- AQUÍ CAMBIAREMOS LOS EMOJIS POR IMÁGENES EN LA FASE 3 ---
     avatar = "🧢" if msg["role"] == "assistant" else "👤"
     with st.chat_message(msg["role"], avatar=avatar):
         st.write(msg["content"])
@@ -297,11 +397,11 @@ elif st.session_state.modo_app == "examen_finalizado":
 elif st.session_state.modo_app == "practica":
     
     # INPUT DEL CHAT NORMAL
-    if prompt := st.chat_input("Escribe..."):
+    if prompt := st.chat_input("Escribe tu respuesta..."):
         st.session_state.mensajes.append({"role": "user", "content": prompt})
         p_sys = get_system_prompt(dia, fase, "practica")
         hist = [{"role": "system", "content": p_sys}] + st.session_state.mensajes[-5:]
-        with st.spinner("..."):
+        with st.spinner("Kai está pensando..."):
             resp = consultar_kai(hist)
         st.session_state.mensajes.append({"role": "assistant", "content": resp})
         guardar_progreso() 
@@ -311,33 +411,34 @@ elif st.session_state.modo_app == "practica":
     col1, col2 = st.columns([1, 1])
     
     with col1:
-        # Lógica super segura para el botón de pistas
         pistas_gastadas = st.session_state.get('pistas_usadas', 0)
         pistas_restantes = 2 - pistas_gastadas
         
         if pistas_restantes > 0:
-            if st.button(f"💡 Pedir Pista ({pistas_restantes} restantes)", use_container_width=True):
+            # Botón de pista con estilo secundario (borde azul)
+            if st.button(f"💡 Pedir Pista ({pistas_restantes})", use_container_width=True, type="secondary"):
                 st.session_state.pistas_usadas = pistas_gastadas + 1
                 st.session_state.mensajes.append({"role": "user", "content": "*(Me he quedado en blanco, ¿me das una pista?)*"})
                 
                 p_sys = get_system_prompt(dia, fase, "pista")
                 hist = [{"role": "system", "content": p_sys}] + st.session_state.mensajes[-4:]
                 
-                with st.spinner("Kai está pensando en cómo ayudarte..."):
+                with st.spinner("Kai te ayuda..."):
                     resp = consultar_kai(hist)
                 
                 st.session_state.mensajes.append({"role": "assistant", "content": f"💡 **PISTA:**\n{resp}"})
                 guardar_progreso()
                 st.rerun()
         else:
-            st.info("💡 0 Pistas. ¡Tú puedes!")
+            st.markdown("<p style='text-align: center; color: #7F8C8D;'>💡 0 Pistas. ¡Tú puedes!</p>", unsafe_allow_html=True)
 
     with col2:
         if len(st.session_state.mensajes) >= 3:
-            if st.button("🔥 EXAMEN", type="primary", use_container_width=True):
+            # Botón de examen con estilo primario (degradado azul)
+            if st.button("🔥 HACER EL EXAMEN", type="primary", use_container_width=True):
                 tipo = random.choice(["traduccion", "quiz", "roleplay"])
                 st.session_state.examen_tipo = tipo
-                with st.spinner(f"Generando {tipo}..."):
+                with st.spinner(f"Generando desafío ({tipo})..."):
                     p_sys = get_system_prompt(dia, fase, "examen_generador", tipo)
                     raw = consultar_kai([{"role": "system", "content": p_sys}, {"role": "user", "content": "Generar"}])
                     
@@ -358,6 +459,7 @@ elif st.session_state.modo_app == "practica":
                     st.session_state.mensajes.append({"role": "assistant", "content": msg})
                     guardar_progreso() 
                     st.rerun()
+
 
 
 
