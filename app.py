@@ -12,7 +12,7 @@ st.set_page_config(page_title="unmute.", page_icon="🌊", layout="wide")
 # --- 2. ESTILOS VISUALES ZEN & DASHBOARD ---
 st.markdown("""
 <style>
-   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
     * {
         font-family: 'Inter', sans-serif !important;
@@ -291,6 +291,7 @@ with col_chat:
             st.session_state.mensajes.append({"role": "assistant", "content": resp})
             guardar_progreso() 
             st.rerun()
+
 
 
 
