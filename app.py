@@ -6,7 +6,7 @@ import re
 import json 
 import os   
 
-# --- 1. CONFIGURACIÓN (AHORA EN MODO WIDE) ---
+# --- 1. CONFIGURACIÓN ---
 st.set_page_config(page_title="unmute.", page_icon="🌊", layout="wide")
 
 # --- 2. ESTILOS VISUALES ZEN & DASHBOARD ---
@@ -14,17 +14,26 @@ st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-    * {
-        font-family: 'Inter', sans-serif !important;
-        letter-spacing: -0.3px !important; 
-    }
-    
+    /* 1. Fuente base: Se aplica a todo de forma suave */
     html, body, .stApp {
+        font-family: 'Inter', sans-serif;
         background-color: #F4F7F6;
         color: #2C3E50; 
     }
     
-    .stApp { background-color: #F4F7F6; }
+    /* 2. Forzamos 'Inter' en textos y botones, pero SIN tocar los 'span' (que es donde viven los iconos) */
+    p, h1, h2, h3, h4, h5, h6, input, button, textarea, div.markdown-text-container {
+        font-family: 'Inter', sans-serif !important;
+        letter-spacing: -0.2px;
+    }
+
+    /* 3. ESCUDO ABSOLUTO PARA LOS ICONOS (Flechitas, cerrar, etc.) */
+    span[class*="material-symbols"], 
+    [data-testid="stIconMaterial"], 
+    svg {
+        font-family: 'Material Symbols Rounded' !important;
+        letter-spacing: normal !important;
+    }
 
     /* Reducir márgenes superiores para aprovechar la pantalla */
     .block-container { padding-top: 1.5rem !important; padding-bottom: 2rem !important; }
@@ -37,7 +46,7 @@ st.markdown("""
     }
     .subtitle { color: #7F8C8D; font-size: 1.1rem; font-weight: 600; margin-bottom: 1.5rem; }
     
-    /* Tarjeta de Vocabulario (Ahora más compacta y elegante) */
+    /* Tarjeta de Vocabulario */
     .vocab-card {
         background: #FFFFFF; 
         border-left: 5px solid #00B4DB;
@@ -169,8 +178,7 @@ with st.sidebar:
         st.session_state.update({"dia_actual": 1, "modo_app": "practica", "examen_progreso": 0, "pistas_usadas": 0})
         st.rerun()
 
-# --- 8. ARQUITECTURA DASHBOARD (PANTALLA DIVIDIDA) ---
-# Generación inicial en segundo plano
+# --- 8. ARQUITECTURA DASHBOARD ---
 if not st.session_state.vocabulario_dia:
     with st.spinner(f"Preparando Misión: {fase}..."):
         prompt_v = get_system_prompt(dia, fase, "vocab")
@@ -181,7 +189,6 @@ if not st.session_state.vocabulario_dia:
             st.session_state.mensajes.append({"role": "assistant", "content": inicio})
             guardar_progreso() 
 
-# DIVIDIMOS LA PANTALLA EN 2 COLUMNAS (30% Izquierda / 70% Derecha)
 col_panel, espacio, col_chat = st.columns([1.2, 0.1, 2.5])
 
 # --- COLUMNA IZQUIERDA: PANEL DE CONTROL ---
@@ -194,7 +201,6 @@ with col_panel:
     
     st.markdown("### ⚡ Acciones")
     
-    # Botonera movida al panel izquierdo para limpiar el chat
     if st.session_state.modo_app == "practica":
         pistas_restantes = 2 - st.session_state.get('pistas_usadas', 0)
         if pistas_restantes > 0:
@@ -209,7 +215,7 @@ with col_panel:
         else:
             st.info("💡 0 Pistas. ¡Tú puedes!")
 
-        st.write("") # Espacio
+        st.write("") 
         if len(st.session_state.mensajes) >= 3:
             if st.button("🔥 HACER EL EXAMEN", type="primary", use_container_width=True):
                 tipo = random.choice(["traduccion", "quiz", "roleplay"])
@@ -233,7 +239,6 @@ with col_panel:
 
 # --- COLUMNA DERECHA: CHAT INMERSIVO ---
 with col_chat:
-    # Contenedor con altura fija para que tenga scroll propio (como WhatsApp)
     chat_box = st.container(height=550, border=False)
     
     with chat_box:
@@ -242,7 +247,6 @@ with col_chat:
             with st.chat_message(msg["role"], avatar=avatar):
                 st.write(msg["content"])
 
-    # Lógica de inputs según el estado
     if st.session_state.modo_app == "examen_activo":
         prog = st.session_state.examen_progreso
         if resp := st.chat_input(f"Simulación ({prog+1}/3)..."):
