@@ -9,7 +9,7 @@ import os
 # --- 1. CONFIGURACIÓN ---
 st.set_page_config(page_title="unmute.", page_icon="⚡", layout="centered")
 
-# --- 2. ESTILOS ---
+# --- 2. ESTILOS VISUALES ---
 st.markdown("""
 <style>
     .block-container { padding-top: 2rem; padding-bottom: 8rem; }
@@ -52,10 +52,12 @@ def consultar_kai(mensajes, temperatura=0.7):
 def get_system_prompt(dia, fase, modo="practica", contexto_extra=""):
     
     perfil = ""
-    if st.session_state.nombre_usuario:
-        perfil += f" Se llama {st.session_state.nombre_usuario}."
-    if st.session_state.intereses_usuario:
-        perfil += f" Le gusta: {st.session_state.intereses_usuario}."
+    # Evitamos errores si las variables de perfil no existen aún
+    nombre = st.session_state.get('nombre_usuario', "")
+    hobbies = st.session_state.get('intereses_usuario', "")
+    
+    if nombre: perfil += f" Se llama {nombre}."
+    if hobbies: perfil += f" Le gusta: {hobbies}."
         
     instruccion_perfil = f"\nINFO DEL ALUMNO:{perfil} Úsalo sutilmente para personalizar la charla o los ejemplos si cuadra." if perfil else ""
 
@@ -86,7 +88,6 @@ def get_system_prompt(dia, fase, modo="practica", contexto_extra=""):
     elif modo == "practica":
         return f"{base} TU ROL: Eres un ACTOR. 1. PROHIBIDO REPETIR lo que dice el usuario. 2. Responde a lo que te pide. 3. CORRECCIÓN INVISIBLE: Si se equivoca, usa la forma correcta en tu respuesta."
 
-    # --- NUEVO: MODO PISTA ---
     elif modo == "pista":
         return f"""{base}
         El usuario se ha quedado en blanco y te ha pedido una pista. 
@@ -118,9 +119,9 @@ def guardar_progreso():
         "examen_respuestas": st.session_state.examen_respuestas,
         "examen_progreso": st.session_state.examen_progreso,
         "nota_final": st.session_state.nota_final,
-        "nombre_usuario": st.session_state.nombre_usuario,
-        "intereses_usuario": st.session_state.intereses_usuario,
-        "pistas_usadas": st.session_state.pistas_usadas # <--- GUARDAMOS LAS PISTAS GASTADAS
+        "nombre_usuario": st.session_state.get('nombre_usuario', ""),
+        "intereses_usuario": st.session_state.get('intereses_usuario', ""),
+        "pistas_usadas": st.session_state.get('pistas_usadas', 0)
     }
     with open(ARCHIVO_PROGRESO, "w", encoding="utf-8") as f:
         json.dump(datos, f, ensure_ascii=False, indent=4)
@@ -136,9 +137,16 @@ if 'iniciado' not in st.session_state:
     datos_guardados = cargar_progreso()
     
     if datos_guardados:
+        # Cargar datos existentes
         for key, value in datos_guardados.items():
             st.session_state[key] = value
+            
+        # Parche de seguridad: si cargamos una partida antigua que no tenía estas variables, las creamos
+        if 'pistas_usadas' not in st.session_state: st.session_state.pistas_usadas = 0
+        if 'nombre_usuario' not in st.session_state: st.session_state.nombre_usuario = ""
+        if 'intereses_usuario' not in st.session_state: st.session_state.intereses_usuario = ""
     else:
+        # Valores iniciales limpios
         st.session_state.dia_actual = 1
         st.session_state.mensajes = []
         st.session_state.vocabulario_dia = None
@@ -150,7 +158,7 @@ if 'iniciado' not in st.session_state:
         st.session_state.nota_final = None
         st.session_state.nombre_usuario = ""
         st.session_state.intereses_usuario = ""
-        st.session_state.pistas_usadas = 0 # <--- NUEVA VARIABLE PARA EL CONTADOR
+        st.session_state.pistas_usadas = 0 
         
     st.session_state.iniciado = True
 
@@ -189,7 +197,7 @@ with st.sidebar:
         st.session_state.dia_actual = 1
         st.session_state.modo_app = "practica"
         st.session_state.examen_progreso = 0
-        st.session_state.pistas_usadas = 0 # Reiniciamos las pistas
+        st.session_state.pistas_usadas = 0 
         st.rerun()
 
 # --- 8. INTERFAZ ---
@@ -281,7 +289,7 @@ elif st.session_state.modo_app == "examen_finalizado":
             st.session_state.vocabulario_dia = None
             st.session_state.modo_app = "practica"
             st.session_state.nota_final = None
-            st.session_state.pistas_usadas = 0 # <--- RECARGAMOS LAS PISTAS AL PASAR DE DÍA
+            st.session_state.pistas_usadas = 0 
             guardar_progreso()
             st.rerun()
 
@@ -299,16 +307,17 @@ elif st.session_state.modo_app == "practica":
         guardar_progreso() 
         st.rerun()
 
-    # --- BOTONERA DE ACCIONES EXTRA (PISTAS Y EXAMEN) ---
+    # --- BOTONERA ---
     col1, col2 = st.columns([1, 1])
     
-  with col1:
-        # Lógica del botón de pistas
-        if 'pistas_usadas' not in st.session_state: st.session_state.pistas_usadas = 0
-        pistas_restantes = 2 - st.session_state.pistas_usadas
+    with col1:
+        # Lógica super segura para el botón de pistas
+        pistas_gastadas = st.session_state.get('pistas_usadas', 0)
+        pistas_restantes = 2 - pistas_gastadas
+        
         if pistas_restantes > 0:
             if st.button(f"💡 Pedir Pista ({pistas_restantes} restantes)", use_container_width=True):
-                st.session_state.pistas_usadas += 1
+                st.session_state.pistas_usadas = pistas_gastadas + 1
                 st.session_state.mensajes.append({"role": "user", "content": "*(Me he quedado en blanco, ¿me das una pista?)*"})
                 
                 p_sys = get_system_prompt(dia, fase, "pista")
@@ -317,15 +326,13 @@ elif st.session_state.modo_app == "practica":
                 with st.spinner("Kai está pensando en cómo ayudarte..."):
                     resp = consultar_kai(hist)
                 
-                # Le añadimos un estilo de formato diferente visualmente
                 st.session_state.mensajes.append({"role": "assistant", "content": f"💡 **PISTA:**\n{resp}"})
                 guardar_progreso()
                 st.rerun()
         else:
-            st.info("💡 0 Pistas. ¡Inténtalo tú!")
+            st.info("💡 0 Pistas. ¡Tú puedes!")
 
     with col2:
-        # Botón de examen (solo aparece si ya hemos hablado un poco)
         if len(st.session_state.mensajes) >= 3:
             if st.button("🔥 EXAMEN", type="primary", use_container_width=True):
                 tipo = random.choice(["traduccion", "quiz", "roleplay"])
@@ -351,6 +358,7 @@ elif st.session_state.modo_app == "practica":
                     st.session_state.mensajes.append({"role": "assistant", "content": msg})
                     guardar_progreso() 
                     st.rerun()
+
 
 
 
