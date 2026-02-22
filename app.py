@@ -196,7 +196,8 @@ with st.sidebar:
 st.markdown('<h1 class="gradient-text">unmute.</h1>', unsafe_allow_html=True)
 
 # A) INICIO
-if not st.session_
+if not st.session_state.vocabulario_dia:
+
 
 
 
