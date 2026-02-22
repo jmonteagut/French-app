@@ -302,8 +302,9 @@ elif st.session_state.modo_app == "practica":
     # --- BOTONERA DE ACCIONES EXTRA (PISTAS Y EXAMEN) ---
     col1, col2 = st.columns([1, 1])
     
-    with col1:
+  with col1:
         # Lógica del botón de pistas
+        if 'pistas_usadas' not in st.session_state: st.session_state.pistas_usadas = 0
         pistas_restantes = 2 - st.session_state.pistas_usadas
         if pistas_restantes > 0:
             if st.button(f"💡 Pedir Pista ({pistas_restantes} restantes)", use_container_width=True):
@@ -350,6 +351,7 @@ elif st.session_state.modo_app == "practica":
                     st.session_state.mensajes.append({"role": "assistant", "content": msg})
                     guardar_progreso() 
                     st.rerun()
+
 
 
 
