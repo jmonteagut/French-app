@@ -3,56 +3,32 @@ from openai import OpenAI
 import random
 import time
 import re
+import json # <--- NUEVO: Para guardar el progreso
+import os   # <--- NUEVO: Para comprobar si existe el archivo de guardado
 
 # --- 1. CONFIGURACIÓN ---
-st.set_page_config(page_title="unmute AI", page_icon="⚡", layout="centered")
+st.set_page_config(page_title="unmute.", page_icon="⚡", layout="centered")
 
 # --- 2. ESTILOS ---
 st.markdown("""
 <style>
-    /* Estructura general */
-    .block-container { 
-        padding-top: 2rem; 
-        padding-bottom: 8rem; 
-    }
-    
-    /* Título */
+    .block-container { padding-top: 2rem; padding-bottom: 8rem; }
     .gradient-text {
         background: linear-gradient(45deg, #FF5F6D, #FFC371);
         -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         font-weight: 900; font-size: 2.5rem; margin: 0;
     }
-    
-    /* Tarjetas (Fix Modo Oscuro) */
     .vocab-card {
-        background-color: #F8F9FA; 
-        border-left: 5px solid #FF5F6D;
-        padding: 15px; 
-        border-radius: 12px; 
-        margin-bottom: 20px;
+        background-color: #F8F9FA; border-left: 5px solid #FF5F6D;
+        padding: 15px; border-radius: 12px; margin-bottom: 20px;
         box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        color: #000000 !important; /* Texto negro forzado */
+        color: #000000 !important; 
     }
-    
     .vocab-card strong { color: #000000 !important; }
-    
-    /* Chat bubbles */
     .stChatMessage { padding: 1rem; border-radius: 12px; margin-bottom: 0.5rem; }
-    
-    /* Input elevado (Fix Móvil) */
-    [data-testid="stChatInput"] {
-        padding-bottom: 4rem !important;
-        background-color: transparent !important;
-    }
-    
-    .stChatInput textarea { 
-        border: 2px solid #FFC371 !important; 
-        border-radius: 15px; 
-    }
-    
-    /* Limpieza */
+    [data-testid="stChatInput"] { padding-bottom: 4rem !important; background-color: transparent !important; }
+    .stChatInput textarea { border: 2px solid #FFC371 !important; border-radius: 15px; }
     #MainMenu, footer, header, [data-testid="stToolbar"] {visibility: hidden;}
-    
 </style>
 """, unsafe_allow_html=True)
 
@@ -74,81 +50,91 @@ def consultar_kai(mensajes, temperatura=0.7):
 
 # --- 4. CEREBRO DE KAI ---
 def get_system_prompt(dia, fase, modo="practica", contexto_extra=""):
-    
-    # REGLA DE FORMATO (BILINGÜE)
     if dia <= 7:
-        formato_idioma = """
-        FORMATO OBLIGATORIO (Cuando hables francés):
-        Frase en Francés (Traducción en Español).
-        """
+        formato_idioma = "FORMATO OBLIGATORIO: Frase en Francés (Traducción en Español)."
     elif dia <= 14:
-        formato_idioma = "Habla en francés. Usa español solo para aclarar dudas complejas."
+        formato_idioma = "Habla en francés. Usa español solo para aclarar dudas."
     else:
         formato_idioma = "Solo francés."
 
-    base = f"""Eres Kai.
-    SITUACIÓN ACTUAL: '{fase}'.
-    {formato_idioma}"""
+    base = f"Eres Kai. SITUACIÓN ACTUAL: '{fase}'. {formato_idioma}"
 
     if modo == "vocab":
-        instruccion_extra = ""
-        if dia <= 7:
-            instruccion_extra = "IMPORTANTE: Incluye OBLIGATORIAMENTE 'S'il vous plaît', 'Merci' y 'Je voudrais...'."
-        
-        return f"{base} Genera 5 palabras/frases clave en FRANCÉS para sobrevivir a esta situación. {instruccion_extra} Formato: Emoji Palabra (Pronunciación) - Traducción."
+        instruccion_extra = "IMPORTANTE: Incluye 'S'il vous plaît', 'Merci' y 'Je voudrais...'." if dia <= 7 else ""
+        return f"{base} Genera 5 frases clave en FRANCÉS para esta situación. {instruccion_extra} Formato: Emoji Palabra (Pronunciación) - Traducción."
 
     elif modo == "inicio_activo":
-        # --- LÓGICA ESPECIAL DÍA 1 (ONBOARDING) ---
         if dia == 1:
             return f"""{base}
-            ¡ES EL PRIMER DÍA!
-            Instrucciones:
-            1. PRESENTACIÓN (En Español): Preséntate como Kai. Explica brevemente que esto es un programa de 30 días basado en "Roleplay Activo" para aprender a hablar sin miedo. Dile que tú serás su compañero de prácticas.
-            2. TRANSICIÓN (En Español): Di algo como "Hoy empezamos en una cafetería. ¡Vamos allá!".
+            ¡PRIMER DÍA!
+            1. PRESENTACIÓN (En Español): Preséntate. Di que esto es un programa de 30 días de Roleplay Activo.
+            2. TRANSICIÓN (En Español): "Hoy empezamos en una cafetería. ¡Vamos allá!".
             3. ACCIÓN (En Francés + Español): Entra en el rol de Camarero y haz la primera pregunta.
             """
         else:
-            # DÍAS NORMALES
-            return f"""{base}
-            INSTRUCCIONES DE INICIO (ESTRICTAS):
-            1. CONTEXTO (En Español): Explica brevemente al alumno qué vamos a hacer y cuál es su rol.
-            2. ACCIÓN (En Francés): Inmediatamente después, cambia de línea, entra en tu rol de personaje y lanza la primera pregunta.
-               (Recuerda poner la traducción entre paréntesis si es nivel principiante).
-            """
+            return f"{base} 1. CONTEXTO (En Español): Explica la situación. 2. ACCIÓN (En Francés): Cambia de línea, entra en tu rol y lanza tu primera pregunta."
 
     elif modo == "practica":
-        return f"""{base}
-        TU ROL: Eres un ACTOR en esta situación.
-        REGLAS DE ORO:
-        1. PROHIBIDO REPETIR: Nunca repitas "Has dicho...".
-        2. FLUJO NATURAL: Responde a lo que pide el usuario.
-        3. CORRECCIÓN INVISIBLE: Si se equivoca, usa la forma correcta en tu respuesta sin regañar.
-        """
+        return f"{base} TU ROL: Eres un ACTOR. 1. PROHIBIDO REPETIR lo que dice el usuario. 2. Responde a lo que te pide. 3. CORRECCIÓN INVISIBLE: Si se equivoca, usa la forma correcta en tu respuesta."
 
-    # ZONA EXAMEN
     elif modo == "examen_generador":
-        separator_instruction = "Separa cada ítem EXACTAMENTE con '|||'. NO uses guiones al inicio."
-        if contexto_extra == "traduccion": return f"3 frases en ESPAÑOL sencillas sobre '{fase}' para traducir. {separator_instruction}"
-        elif contexto_extra == "quiz": return f"3 preguntas test cortas en FRANCÉS sobre '{fase}' (con traducción). {separator_instruction}"
-        elif contexto_extra == "roleplay": return f"Inicia un roleplay tenso sobre '{fase}'. Tu primera frase en FRANCÉS (con traducción)."
+        sep = "Separa cada ítem con '|||'. NO uses guiones."
+        if contexto_extra == "traduccion": return f"3 frases en ESPAÑOL sobre '{fase}' para traducir. {sep}"
+        elif contexto_extra == "quiz": return f"3 preguntas test en FRANCÉS sobre '{fase}' (con traducción). {sep}"
+        elif contexto_extra == "roleplay": return f"Inicia un roleplay sobre '{fase}'. Tu primera frase en FRANCÉS (con traducción)."
 
     elif modo == "examen_roleplay_activo": return f"Roleplay examen. Actúa y responde. No ayudes."
+    elif modo == "corrector_final": return f"Evalúa. Formato: NOTA: [0-10]/10. FEEDBACK: [Resumen español]. TIPS: [Consejos]."
 
-    elif modo == "corrector_final":
-        return f"Evalúa. Formato: NOTA: [0-10]/10. FEEDBACK: [Resumen español]. TIPS: [Consejos español]."
+# --- 5. SISTEMA DE GUARDADO (MEMORIA) ---
+ARCHIVO_PROGRESO = "progreso_kai.json"
 
-# --- 5. GESTIÓN DE ESTADO ---
-if 'dia_actual' not in st.session_state: st.session_state.dia_actual = 1
-if 'mensajes' not in st.session_state: st.session_state.mensajes = []
-if 'vocabulario_dia' not in st.session_state: st.session_state.vocabulario_dia = None
-if 'modo_app' not in st.session_state: st.session_state.modo_app = "practica"
-if 'examen_tipo' not in st.session_state: st.session_state.examen_tipo = None 
-if 'examen_data' not in st.session_state: st.session_state.examen_data = [] 
-if 'examen_respuestas' not in st.session_state: st.session_state.examen_respuestas = [] 
-if 'examen_progreso' not in st.session_state: st.session_state.examen_progreso = 0
-if 'nota_final' not in st.session_state: st.session_state.nota_final = None
+def guardar_progreso():
+    """Guarda todas las variables de la sesión en un archivo local"""
+    datos = {
+        "dia_actual": st.session_state.dia_actual,
+        "mensajes": st.session_state.mensajes,
+        "vocabulario_dia": st.session_state.vocabulario_dia,
+        "modo_app": st.session_state.modo_app,
+        "examen_tipo": st.session_state.examen_tipo,
+        "examen_data": st.session_state.examen_data,
+        "examen_respuestas": st.session_state.examen_respuestas,
+        "examen_progreso": st.session_state.examen_progreso,
+        "nota_final": st.session_state.nota_final
+    }
+    with open(ARCHIVO_PROGRESO, "w", encoding="utf-8") as f:
+        json.dump(datos, f, ensure_ascii=False, indent=4)
 
-# --- 6. SIDEBAR ---
+def cargar_progreso():
+    """Carga los datos si el archivo existe"""
+    if os.path.exists(ARCHIVO_PROGRESO):
+        with open(ARCHIVO_PROGRESO, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return None
+
+# --- 6. GESTIÓN DE ESTADO E INICIALIZACIÓN ---
+if 'iniciado' not in st.session_state:
+    datos_guardados = cargar_progreso()
+    
+    if datos_guardados:
+        # Si hay partida guardada, restauramos todo
+        for key, value in datos_guardados.items():
+            st.session_state[key] = value
+    else:
+        # Si es la primera vez, valores por defecto
+        st.session_state.dia_actual = 1
+        st.session_state.mensajes = []
+        st.session_state.vocabulario_dia = None
+        st.session_state.modo_app = "practica"
+        st.session_state.examen_tipo = None 
+        st.session_state.examen_data = [] 
+        st.session_state.examen_respuestas = [] 
+        st.session_state.examen_progreso = 0
+        st.session_state.nota_final = None
+        
+    st.session_state.iniciado = True
+
+# --- 7. SIDEBAR Y FASES ---
 with st.sidebar:
     st.header("🗺️ Ruta 30 Días")
     dia = st.session_state.dia_actual
@@ -166,14 +152,18 @@ with st.sidebar:
     st.progress(dia / 30)
     st.caption(f"Día {dia}: {fase}")
 
-    if st.button("🔄 Reiniciar Todo"):
-        st.session_state.mensajes = []
-        st.session_state.vocabulario_dia = None
+    # Ahora reiniciar borra el archivo de guardado
+    if st.button("🔄 Borrar Partida y Reiniciar"):
+        if os.path.exists(ARCHIVO_PROGRESO):
+            os.remove(ARCHIVO_PROGRESO)
+        for key in ["mensajes", "vocabulario_dia", "examen_tipo", "examen_data", "examen_respuestas", "nota_final"]:
+            st.session_state[key] = None if key in ["vocabulario_dia", "examen_tipo", "nota_final"] else []
+        st.session_state.dia_actual = 1
         st.session_state.modo_app = "practica"
-        st.session_state.nota_final = None
+        st.session_state.examen_progreso = 0
         st.rerun()
 
-# --- 7. INTERFAZ ---
+# --- 8. INTERFAZ ---
 st.markdown('<h1 class="gradient-text">unmute.</h1>', unsafe_allow_html=True)
 
 # A) INICIO
@@ -187,9 +177,9 @@ if not st.session_state.vocabulario_dia:
             prompt_i = get_system_prompt(dia, fase, "inicio_activo")
             inicio = consultar_kai([{"role": "system", "content": prompt_i}, {"role": "user", "content": f"Vocabulario: {vocab}. Empieza."}])
             st.session_state.mensajes.append({"role": "assistant", "content": inicio})
+            guardar_progreso() # Guardamos tras la generación inicial
 
 with st.expander(f"📚 Vocabulario: {fase}", expanded=True):
-    # CSS class aplicada para el contraste
     st.markdown(f'<div class="vocab-card">{st.session_state.vocabulario_dia}</div>', unsafe_allow_html=True)
 
 st.divider()
@@ -200,7 +190,7 @@ for msg in st.session_state.mensajes:
     with st.chat_message(msg["role"], avatar=avatar):
         st.write(msg["content"])
 
-# --- 8. ZONA DE ACCIÓN ---
+# --- 9. ZONA DE ACCIÓN ---
 
 # EXAMEN ACTIVO
 if st.session_state.modo_app == "examen_activo":
@@ -215,6 +205,7 @@ if st.session_state.modo_app == "examen_activo":
         
         if st.session_state.examen_progreso >= 3:
             st.session_state.modo_app = "examen_finalizado"
+            guardar_progreso()
             st.rerun()
         else:
             if tipo == "roleplay":
@@ -225,6 +216,7 @@ if st.session_state.modo_app == "examen_activo":
             else:
                 next_q = st.session_state.examen_data[st.session_state.examen_progreso]
                 st.session_state.mensajes.append({"role": "assistant", "content": f"➡️ {next_q}"})
+            guardar_progreso()
             st.rerun()
 
 # CORRECCIÓN
@@ -233,70 +225,8 @@ elif st.session_state.modo_app == "examen_finalizado":
     if len(st.session_state.mensajes) > 0 and "RESULTADO" not in st.session_state.mensajes[-1]["content"]:
         with st.spinner("Evaluando..."):
             log = "\n".join([f"R{i+1}: {r}" for i, r in enumerate(st.session_state.examen_respuestas)])
-            p_sys = get_system_prompt(dia, fase, "corrector_final")
-            corr = consultar_kai([{"role": "system", "content": p_sys}, {"role": "user", "content": log}])
-            st.session_state.mensajes.append({"role": "assistant", "content": f"📊 **RESULTADO:**\n\n{corr}"})
-            match = re.search(r"NOTA:\s*(\d+)", corr)
-            st.session_state.nota_final = int(match.group(1)) if match else 5
-            st.rerun()
+            p_sys
 
-    nota = st.session_state.nota_final if st.session_state.nota_final is not None else 0
-    if nota <= 5:
-        st.error(f"Nota: {nota}/10. ¡Inténtalo de nuevo!")
-        if st.button("🔄 REPETIR EXAMEN", type="primary"):
-            st.session_state.modo_app = "practica"
-            st.session_state.examen_respuestas = []
-            st.session_state.examen_progreso = 0
-            st.session_state.nota_final = None
-            st.rerun()
-    else:
-        st.balloons()
-        st.success(f"¡Aprobado: {nota}/10!")
-        if st.button("🚀 SIGUIENTE DÍA", type="primary"):
-            st.session_state.dia_actual += 1
-            st.session_state.mensajes = []
-            st.session_state.vocabulario_dia = None
-            st.session_state.modo_app = "practica"
-            st.session_state.nota_final = None
-            st.rerun()
-
-# PRÁCTICA
-elif st.session_state.modo_app == "practica":
-    if prompt := st.chat_input("Escribe..."):
-        st.session_state.mensajes.append({"role": "user", "content": prompt})
-        p_sys = get_system_prompt(dia, fase, "practica")
-        hist = [{"role": "system", "content": p_sys}] + st.session_state.mensajes[-5:]
-        with st.spinner("..."):
-            resp = consultar_kai(hist)
-        st.session_state.mensajes.append({"role": "assistant", "content": resp})
-        st.rerun()
-
-    if len(st.session_state.mensajes) >= 3:
-        if st.button("🔥 EXAMEN", type="primary", use_container_width=True):
-            tipo = random.choice(["traduccion", "quiz", "roleplay"])
-            st.session_state.examen_tipo = tipo
-            with st.spinner(f"Generando {tipo}..."):
-                p_sys = get_system_prompt(dia, fase, "examen_generador", tipo)
-                raw = consultar_kai([{"role": "system", "content": p_sys}, {"role": "user", "content": "Generar"}])
-                
-                if tipo == "roleplay":
-                    st.session_state.examen_data = "roleplay"
-                    msg = f"🎭 **ROLEPLAY**\n{raw}"
-                else:
-                    # LÓGICA DE SPLIT MEJORADA CON SEPARADOR '|||'
-                    qs = [q.strip() for q in raw.split("|||") if q.strip()]
-                    if len(qs) < 3: qs = [q.strip() for q in raw.split("\n") if q.strip() and "?" in q]
-                    if len(qs) < 3: qs = ["Traduce: 'Hola'", "Traduce: 'Gracias'", "Traduce: 'Adios'"]
-                    
-                    st.session_state.examen_data = qs[:3] 
-                    msg = f"📝 **EXAMEN**\n1. {qs[0]}"
-
-                st.session_state.modo_app = "examen_activo"
-                st.session_state.examen_progreso = 0
-                st.session_state.examen_respuestas = []
-                st.session_state.nota_final = None
-                st.session_state.mensajes.append({"role": "assistant", "content": msg})
-                st.rerun()
 
 
 
