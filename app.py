@@ -21,13 +21,13 @@ st.markdown("""
         color: #2C3E50; 
     }
     
-    /* 2. Forzamos 'Inter' en textos y botones, pero SIN tocar los 'span' (que es donde viven los iconos) */
+    /* 2. Forzamos 'Inter' en textos y botones, pero SIN tocar los 'span' (iconos) */
     p, h1, h2, h3, h4, h5, h6, input, button, textarea, div.markdown-text-container {
         font-family: 'Inter', sans-serif !important;
         letter-spacing: -0.2px;
     }
 
-    /* 3. ESCUDO ABSOLUTO PARA LOS ICONOS (Flechitas, cerrar, etc.) */
+    /* 3. ESCUDO PARA LOS ICONOS */
     span[class*="material-symbols"], 
     [data-testid="stIconMaterial"], 
     svg {
@@ -168,9 +168,12 @@ with st.sidebar:
     st.caption(f"Día {dia}: {fase}")
     st.divider()
 
-    with st.expander("👤 Tu Perfil", expanded=False):
-        st.text_input("Tu nombre:", key="nombre_usuario", on_change=guardar_progreso)
-        st.text_input("Hobbies (ej: cine, deporte):", key="intereses_usuario", on_change=guardar_progreso)
+    # Perfil integrado directamente, sin expander
+    st.markdown("### 👤 Tu Perfil")
+    st.text_input("Tu nombre:", key="nombre_usuario", on_change=guardar_progreso)
+    st.text_input("Hobbies (ej: cine, deporte):", key="intereses_usuario", on_change=guardar_progreso)
+    st.caption("Kai usará esto para personalizar tus clases.")
+    
     st.divider()
     if st.button("🔄 Borrar Partida"):
         if os.path.exists(ARCHIVO_PROGRESO): os.remove(ARCHIVO_PROGRESO)
@@ -295,6 +298,7 @@ with col_chat:
             st.session_state.mensajes.append({"role": "assistant", "content": resp})
             guardar_progreso() 
             st.rerun()
+
 
 
 
