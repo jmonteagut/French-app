@@ -45,7 +45,7 @@ st.markdown("""
     }
     .subtitle { color: #7F8C8D; font-size: 1.1rem; font-weight: 600; margin-bottom: 1.5rem; }
     
-    /* Tarjeta de Vocabulario */
+    /* Tarjeta de Vocabulario (Mejorada para listas) */
     .vocab-card {
         background: #FFFFFF; 
         border-left: 5px solid #00B4DB;
@@ -55,6 +55,7 @@ st.markdown("""
         color: #2C3E50 !important;
         font-size: 0.95rem;
         margin-bottom: 1.5rem;
+        line-height: 1.6; /* Un poco más de espacio entre líneas para que se lea mejor */
     }
     .vocab-card strong { color: #0083B0 !important; }
     
@@ -76,7 +77,7 @@ st.markdown("""
     .stChatInput textarea { border: 2px solid #E0E6ED !important; border-radius: 16px !important; background: #FFFFFF !important; color: #2C3E50 !important; }
     .stChatInput textarea:focus { border-color: #00B4DB !important; }
     
-    /* CORRECCIÓN: Ocultamos el menú principal y el footer, pero dejamos el header para no perder el botón del menú lateral en móviles */
+    /* Ocultamos el menú principal y el footer */
     #MainMenu, footer, [data-testid="stToolbar"] {visibility: hidden;}
     header {background-color: transparent !important;}
 </style>
@@ -111,7 +112,8 @@ def get_system_prompt(dia, fase, modo="practica", contexto_extra=""):
 
     if modo == "vocab":
         ext = "IMPORTANTE: Incluye 'S'il vous plaît', 'Merci' y 'Je voudrais...'." if dia <= 7 else ""
-        return f"{base} Genera 5 frases clave en FRANCÉS para esta situación. {ext} Formato: Emoji Palabra (Pronunciación) - Traducción."
+        # Instrucción estricta para formato de lista
+        return f"{base} Genera una lista de 5 frases clave en FRANCÉS para esta situación. {ext} FORMATO ESTRICTO: Cada frase en una línea nueva. Usa este formato exacto: \n- Emoji **Palabra en francés** (Pronunciación) - Traducción en español."
     elif modo == "inicio_activo":
         if dia == 1: return f"{base} ¡PRIMER DÍA! 1. PRESÉNTATE (En Español). 2. TRANSICIÓN: '¡Vamos allá!'. 3. ACCIÓN (En Francés + Español): Entra en rol y pregunta."
         else: return f"{base} 1. CONTEXTO (En Español): Explica la situación. 2. ACCIÓN (En Francés): Cambia de línea, entra en tu rol y pregunta."
@@ -188,7 +190,7 @@ if not st.session_state.vocabulario_dia:
         st.session_state.vocabulario_dia = consultar_kai([{"role": "system", "content": prompt_v}, {"role": "user", "content": "Generar"}])
         if len(st.session_state.mensajes) == 0:
             prompt_i = get_system_prompt(dia, fase, "inicio_activo")
-            inicio = consultar_kai([{"role": "system", "content": prompt_i}, {"role": "user", "content": f"Vocabulario: {st.session_state.vocabulario_dia}. Empieza."}])
+            inicio = consultar_kai([{"role": "system", "content": prompt_i}, {"role": "user", "content": f"Misión iniciada. Empieza."}]) # Limpiado para no saturar
             st.session_state.mensajes.append({"role": "assistant", "content": inicio})
             guardar_progreso() 
 
@@ -200,7 +202,14 @@ with col_panel:
     st.markdown(f'<div class="subtitle">Día {dia} | {fase}</div>', unsafe_allow_html=True)
     
     st.markdown("### 📚 Tu Chuleta")
-    st.markdown(f'<div class="vocab-card">{st.session_state.vocabulario_dia}</div>', unsafe_allow_html=True)
+    
+    # TRADUCTOR MÁGICO PARA EL VOCABULARIO
+    # Convierte las negritas de Markdown (**texto**) a negritas de HTML (<strong>texto</strong>)
+    vocab_html = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', st.session_state.vocabulario_dia)
+    # Convierte los saltos de línea a saltos de HTML (<br>)
+    vocab_html = vocab_html.replace('\n', '<br>')
+    
+    st.markdown(f'<div class="vocab-card">{vocab_html}</div>', unsafe_allow_html=True)
     
     st.markdown("### ⚡ Acciones")
     
@@ -298,6 +307,7 @@ with col_chat:
             st.session_state.mensajes.append({"role": "assistant", "content": resp})
             guardar_progreso() 
             st.rerun()
+
 
 
 
